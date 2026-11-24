@@ -46,21 +46,21 @@ export default function MyOrderDetailPage() {
     <div className="mx-auto max-w-2xl py-8">
       <Link href="/account/orders" className="text-sm text-muted transition hover:text-cream">← My Orders</Link>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-3xl font-extrabold text-cream">{order.orderNumber}</h1>
-        <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">{order.status}</span>
+        <h1 className="text-4xl font-extrabold tracking-tight text-cream">{order.orderNumber}</h1>
+        <span className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-glow">{order.status}</span>
       </div>
       <p className="mt-1 text-sm text-muted">
         Placed {new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
       </p>
 
-      <section className="mt-6 rounded-2xl border border-line bg-surface p-5">
-        <h2 className="font-bold text-cream">Items</h2>
+      <section className="mt-6 rounded-3xl border border-line/70 bg-surface p-6">
+        <h2 className="text-lg font-extrabold tracking-tight text-cream">Items</h2>
         <ul className="mt-3 space-y-3">
           {order.items.map((item, i) => (
             <li key={i} className="flex items-center gap-3 text-sm">
               {item.image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.image} alt="" loading="lazy" className="h-12 w-12 rounded-lg object-cover" />
+                <img src={item.image} alt="" loading="lazy" className="h-14 w-14 rounded-xl object-cover" />
               )}
               <span className="flex-1 text-muted">{item.name} <span className="text-muted-2">× {item.quantity}</span></span>
               <span className="font-medium text-cream">{formatMoney(item.price * item.quantity, currency)}</span>
@@ -79,8 +79,8 @@ export default function MyOrderDetailPage() {
       </section>
 
       {order.shippingAddress && (
-        <section className="mt-4 rounded-2xl border border-line bg-surface p-5">
-          <h2 className="font-bold text-cream">Delivery Address</h2>
+        <section className="mt-4 rounded-3xl border border-line/70 bg-surface p-6">
+          <h2 className="text-lg font-extrabold tracking-tight text-cream">Delivery Address</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
             {order.shippingAddress.zipCode}, {order.shippingAddress.country}

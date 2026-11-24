@@ -1,6 +1,6 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { fetchCategories, fetchProducts, fetchStoreConfig } from "@/lib/api";
+import { fetchCategories, fetchProducts, fetchStoreConfig, storeDisplayName } from "@/lib/api";
 
 export default async function HomePage() {
   const [config, categories, featured, arrivals] = await Promise.all([
@@ -10,54 +10,118 @@ export default async function HomePage() {
     fetchProducts({ sort: "newest", limit: 4 }),
   ]);
   const currency = config.currency;
-  const circles = categories.filter((c) => c.productsCount > 0).slice(0, 6);
+  const name = storeDisplayName(config);
+  const tiles = categories.filter((c) => c.productsCount > 0).slice(0, 6);
   const audioCategory = categories.find((c) => /audio/i.test(c.name) || /audio/i.test(c.slug));
 
+  const sectionHead = (id: string, title: string, href: string) => (
+    <div className="mb-7 flex items-end justify-between gap-4">
+      <div>
+        <span aria-hidden className="mb-3 block h-1 w-10 rounded-full bg-primary" />
+        <h2 id={id} className="text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">{title}</h2>
+      </div>
+      <Link
+        href={href}
+        className="shrink-0 rounded-full border border-line px-4 py-1.5 text-sm font-semibold text-muted transition hover:border-primary hover:text-cream"
+      >
+        View all →
+      </Link>
+    </div>
+  );
+
   return (
-    <div className="pb-4">
+    <div className="pb-6">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-surface px-6 py-14 text-center sm:px-12 sm:py-20">
+      <section className="relative mt-6 overflow-hidden rounded-[2rem] border border-line/60 bg-gradient-to-br from-surface-2 via-surface to-ink-2 px-6 py-16 sm:mt-10 sm:px-12 sm:py-24">
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl"
+          className="pointer-events-none absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,241,242,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,241,242,0.045) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage: "radial-gradient(70% 90% at 30% 40%, black, transparent)",
+            WebkitMaskImage: "radial-gradient(70% 90% at 30% 40%, black, transparent)",
+          }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-28 -left-16 h-72 w-72 rounded-full bg-primary/15 blur-3xl"
+          className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary/25 blur-3xl"
         />
-        <h1 className="relative mx-auto max-w-2xl text-4xl font-extrabold leading-tight text-cream sm:text-5xl">
-          Upgrade Your Everyday Tech
-        </h1>
-        <p className="relative mx-auto mt-4 max-w-xl text-base text-muted sm:text-lg">
-          Headphones, speakers and everyday electronics — real products, honest prices, delivered to your door.
-        </p>
-        <Link
-          href="/shop"
-          className="relative mt-8 inline-block rounded-full bg-primary px-8 py-3 text-base font-bold text-white shadow-lg shadow-primary/30 transition hover:bg-primary-dark"
-        >
-          Shop Now
-        </Link>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-primary/15 blur-3xl"
+        />
+        <div className="relative max-w-3xl">
+          <p className="inline-flex items-center gap-2 rounded-full border border-line/70 bg-ink/50 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-muted backdrop-blur">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-primary" />
+            {config.tagline || name}
+          </p>
+          <h1 className="mt-6 text-5xl font-extrabold leading-[1.02] tracking-[-0.03em] text-cream sm:text-6xl lg:text-[4.2rem]">
+            Upgrade Your Everyday Tech
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+            Headphones, speakers and everyday electronics — real products, honest prices, delivered to your door.
+          </p>
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="/shop"
+              className="inline-block rounded-full bg-primary px-8 py-3.5 text-base font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.98]"
+            >
+              Shop Now
+            </Link>
+            <Link
+              href="#categories"
+              className="inline-block rounded-full border border-line px-8 py-3.5 text-base font-semibold text-cream transition hover:border-primary/60 hover:bg-surface/60"
+            >
+              Browse Categories
+            </Link>
+          </div>
+          <ul className="mt-10 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted">
+            <li className="flex items-center gap-2">
+              <span aria-hidden className="font-bold text-primary">✓</span> Order tracking on every purchase
+            </li>
+            <li className="flex items-center gap-2">
+              <span aria-hidden className="font-bold text-primary">✓</span> Transparent pricing, confirmed at checkout
+            </li>
+          </ul>
+        </div>
       </section>
 
-      {/* Category circles */}
-      {circles.length > 0 && (
-        <section aria-label="Browse categories" className="mt-12">
-          <div className="flex flex-wrap justify-center gap-5 sm:gap-8">
-            {circles.map((category) => (
+      {/* Category tiles */}
+      {tiles.length > 0 && (
+        <section id="categories" aria-label="Browse categories" className="mt-20 scroll-mt-32">
+          <div className="mb-7">
+            <span aria-hidden className="mb-3 block h-1 w-10 rounded-full bg-primary" />
+            <h2 className="text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">Shop by Category</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-6">
+            {tiles.map((category) => (
               <Link
                 key={category._id}
                 href={`/category/${category.slug}`}
-                className="group flex w-24 flex-col items-center gap-2 text-center"
+                className="group relative block aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-line/60 bg-surface transition duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-card"
               >
-                <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-line bg-surface transition group-hover:border-primary">
-                  {category.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={category.image} alt={category.name} loading="lazy" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-2xl font-extrabold text-primary">{category.name.charAt(0)}</span>
-                  )}
+                {category.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.08]"
+                  />
+                ) : (
+                  <span className="absolute inset-0 flex items-center justify-center text-5xl font-extrabold text-line">
+                    {category.name.charAt(0)}
+                  </span>
+                )}
+                <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent" />
+                <span className="absolute inset-x-0 bottom-0 p-4">
+                  <span className="block text-sm font-bold leading-tight text-cream">{category.name}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {category.productsCount} {category.productsCount === 1 ? "product" : "products"}
+                  </span>
                 </span>
-                <span className="text-sm font-medium text-muted transition group-hover:text-cream">{category.name}</span>
               </Link>
             ))}
           </div>
@@ -66,14 +130,9 @@ export default async function HomePage() {
 
       {/* Featured products */}
       {featured.products.length > 0 && (
-        <section aria-labelledby="featured-heading" className="mt-14">
-          <div className="mb-5 flex items-end justify-between">
-            <h2 id="featured-heading" className="text-2xl font-bold text-cream">Featured Products</h2>
-            <Link href="/shop" className="text-sm font-medium text-primary transition hover:text-cream">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <section aria-labelledby="featured-heading" className="mt-20">
+          {sectionHead("featured-heading", "Featured Products", "/shop")}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {featured.products.map((product) => (
               <ProductCard key={product._id} product={product} currency={currency} />
             ))}
@@ -82,29 +141,29 @@ export default async function HomePage() {
       )}
 
       {/* Promo banner */}
-      <section className="mt-14 overflow-hidden rounded-3xl bg-primary px-6 py-10 text-center sm:px-12">
-        <h2 className="text-3xl font-extrabold text-white">Up to 30% Off Audio</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-white/85">
-          Selected headphones and speakers at their lowest prices — while stock lasts.
-        </p>
-        <Link
-          href={audioCategory ? `/category/${audioCategory.slug}` : "/shop"}
-          className="mt-6 inline-block rounded-full bg-ink px-7 py-2.5 font-bold text-cream transition hover:bg-ink-2"
-        >
-          Shop the Sale
-        </Link>
+      <section className="relative mt-20 overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary to-primary-dark px-6 py-12 sm:px-12 sm:py-14">
+        <span aria-hidden className="pointer-events-none absolute -right-6 -top-20 select-none text-[12rem] font-black leading-none text-white/10">
+          %
+        </span>
+        <div className="relative max-w-xl">
+          <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Up to 30% Off Audio</h2>
+          <p className="mt-3 max-w-md text-base text-white/85">
+            Selected headphones and speakers at their lowest prices — while stock lasts.
+          </p>
+          <Link
+            href={audioCategory ? `/category/${audioCategory.slug}` : "/shop"}
+            className="mt-7 inline-block rounded-full bg-ink px-8 py-3 font-bold text-cream shadow-card transition hover:bg-ink-2 active:scale-[0.98]"
+          >
+            Shop the Sale
+          </Link>
+        </div>
       </section>
 
       {/* New arrivals */}
       {arrivals.products.length > 0 && (
-        <section aria-labelledby="arrivals-heading" className="mt-14">
-          <div className="mb-5 flex items-end justify-between">
-            <h2 id="arrivals-heading" className="text-2xl font-bold text-cream">New Arrivals</h2>
-            <Link href="/shop?sort=newest" className="text-sm font-medium text-primary transition hover:text-cream">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <section aria-labelledby="arrivals-heading" className="mt-20">
+          {sectionHead("arrivals-heading", "New Arrivals", "/shop?sort=newest")}
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {arrivals.products.map((product) => (
               <ProductCard key={product._id} product={product} currency={currency} />
             ))}

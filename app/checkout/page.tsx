@@ -15,8 +15,8 @@ import {
 import { useShop } from "@/lib/store";
 
 const inputCls =
-  "w-full rounded-lg border border-line bg-ink-2 px-3 py-2 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-2";
+  "w-full rounded-xl border border-line/80 bg-ink-2/80 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-2";
 
 export default function CheckoutPage() {
   const { cart, user, clearCart, ready } = useShop();
@@ -124,9 +124,9 @@ export default function CheckoutPage() {
   if (ready && cart.length === 0 && !placed) {
     return (
       <div className="py-16 text-center">
-        <h1 className="text-3xl font-extrabold text-cream">Checkout</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-cream">Checkout</h1>
         <p className="mt-3 text-muted">Your cart is empty — add something first.</p>
-        <Link href="/shop" className="mt-6 inline-block rounded-full bg-primary px-7 py-2.5 font-bold text-white transition hover:bg-primary-dark">
+        <Link href="/shop" className="mt-6 inline-block rounded-full bg-primary px-8 py-3 font-bold text-white shadow-glow transition hover:bg-primary-dark">
           Go to Shop
         </Link>
       </div>
@@ -136,27 +136,27 @@ export default function CheckoutPage() {
   if (placed) {
     return (
       <div className="mx-auto max-w-xl py-16 text-center">
-        <p className="text-5xl" aria-hidden>✓</p>
-        <h1 className="mt-4 text-3xl font-extrabold text-cream">Order placed — thank you!</h1>
+        <p aria-hidden className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-4xl text-primary ring-1 ring-primary/40">✓</p>
+        <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-cream">Order placed — thank you!</h1>
         <p className="mt-3 text-muted">
           Your order number is <span className="font-bold text-cream">{placed.orderNumber}</span>.
           Keep it safe — you can track your order any time with this number and your email.
         </p>
-        <dl className="mx-auto mt-6 max-w-sm space-y-1 rounded-2xl border border-line bg-surface p-5 text-left text-sm">
+        <dl className="mx-auto mt-6 max-w-sm space-y-1 rounded-3xl border border-line/70 bg-surface p-6 text-left text-sm">
           <div className="flex justify-between"><dt className="text-muted">Total</dt><dd className="font-bold text-cream">{formatMoney(placed.total, currency)}</dd></div>
           <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{placed.paymentMethod} ({placed.paymentStatus})</dd></div>
           <div className="flex justify-between"><dt className="text-muted">Status</dt><dd className="text-cream">{placed.status}</dd></div>
         </dl>
-        <div className="mt-6 flex justify-center gap-3">
-          <Link href="/track-order" className="rounded-full bg-primary px-6 py-2.5 font-bold text-white transition hover:bg-primary-dark">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link href="/track-order" className="rounded-full bg-primary px-6 py-3 font-bold text-white shadow-glow transition hover:bg-primary-dark">
             Track Order
           </Link>
           {user && (
-            <Link href="/account/orders" className="rounded-full border border-line px-6 py-2.5 font-semibold text-muted transition hover:border-primary hover:text-cream">
+            <Link href="/account/orders" className="rounded-full border border-line/80 px-6 py-3 font-semibold text-muted transition hover:border-primary hover:text-cream">
               My Orders
             </Link>
           )}
-          <Link href="/shop" className="rounded-full border border-line px-6 py-2.5 font-semibold text-muted transition hover:border-primary hover:text-cream">
+          <Link href="/shop" className="rounded-full border border-line/80 px-6 py-3 font-semibold text-muted transition hover:border-primary hover:text-cream">
             Continue Shopping
           </Link>
         </div>
@@ -191,11 +191,11 @@ export default function CheckoutPage() {
 
   return (
     <div className="py-8">
-      <h1 className="text-3xl font-extrabold text-cream">Checkout</h1>
+      <h1 className="text-4xl font-extrabold tracking-tight text-cream">Checkout</h1>
       <form onSubmit={placeOrder} className="mt-6 grid gap-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
-          <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="contact-h">
-            <h2 id="contact-h" className="font-bold text-cream">Contact</h2>
+          <section className="rounded-3xl border border-line/70 bg-surface p-6" aria-labelledby="contact-h">
+            <h2 id="contact-h" className="flex items-center text-lg font-extrabold tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-extrabold text-primary ring-1 ring-primary/30">1</span>Contact</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="co-first" className={labelCls}>First name *</label>
@@ -242,8 +242,8 @@ export default function CheckoutPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="ship-h">
-            <h2 id="ship-h" className="font-bold text-cream">Shipping Address</h2>
+          <section className="rounded-3xl border border-line/70 bg-surface p-6" aria-labelledby="ship-h">
+            <h2 id="ship-h" className="flex items-center text-lg font-extrabold tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-extrabold text-primary ring-1 ring-primary/30">2</span>Shipping Address</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="co-street" className={labelCls}>Street address *</label>
@@ -269,8 +269,8 @@ export default function CheckoutPage() {
           </section>
 
           {shipping && shipping.configured && (
-            <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="delivery-h">
-              <h2 id="delivery-h" className="font-bold text-cream">Delivery</h2>
+            <section className="rounded-3xl border border-line/70 bg-surface p-6" aria-labelledby="delivery-h">
+              <h2 id="delivery-h" className="flex items-center text-lg font-extrabold tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-extrabold text-primary ring-1 ring-primary/30">3</span>Delivery</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="co-method" className={labelCls}>Shipping method</label>
@@ -294,11 +294,11 @@ export default function CheckoutPage() {
             </section>
           )}
 
-          <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="pay-h">
-            <h2 id="pay-h" className="font-bold text-cream">Payment</h2>
+          <section className="rounded-3xl border border-line/70 bg-surface p-6" aria-labelledby="pay-h">
+            <h2 id="pay-h" className="flex items-center text-lg font-extrabold tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-extrabold text-primary ring-1 ring-primary/30">4</span>Payment</h2>
             <div className="mt-3 space-y-2">
               {(config?.paymentMethods.length ? config.paymentMethods : [{ name: "Cash on Delivery", description: "" }]).map((method) => (
-                <label key={method.name} className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-ink-2 px-4 py-3 text-sm transition hover:border-primary">
+                <label key={method.name} className="flex cursor-pointer items-center gap-3 rounded-2xl border border-line/70 bg-ink-2 px-4 py-3.5 text-sm transition hover:border-primary/70 has-[:checked]:border-primary has-[:checked]:bg-primary/10">
                   <input
                     type="radio"
                     name="payment"
@@ -320,8 +320,8 @@ export default function CheckoutPage() {
           </section>
         </div>
 
-        <aside className="h-fit rounded-2xl border border-line bg-surface p-5 lg:sticky lg:top-32">
-          <h2 className="font-bold text-cream">Order Summary</h2>
+        <aside className="h-fit rounded-3xl border border-line/70 bg-surface p-6 lg:sticky lg:top-32">
+          <h2 className="text-lg font-extrabold tracking-tight text-cream">Order Summary</h2>
           <ul className="mt-3 space-y-2 text-sm">
             {cart.map((line) => (
               <li key={`${line.productId}-${line.variant || ""}`} className="flex justify-between gap-3">
@@ -363,7 +363,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={placing || !quote}
-            className="mt-5 w-full rounded-full bg-primary py-3 font-bold text-white transition hover:bg-primary-dark disabled:opacity-60"
+            className="mt-5 w-full rounded-full bg-primary py-3.5 text-base font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.99] disabled:opacity-60"
           >
             {placing ? "Placing order…" : "Place Order"}
           </button>

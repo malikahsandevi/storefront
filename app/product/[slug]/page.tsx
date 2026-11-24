@@ -87,42 +87,42 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <div className="py-8">
+    <div className="py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted-2">
+      <nav aria-label="Breadcrumb" className="mb-6 text-xs font-medium uppercase tracking-[0.12em] text-muted-2">
         <Link href="/" className="transition hover:text-cream">Home</Link>
-        <span aria-hidden> / </span>
+        <span aria-hidden className="px-1.5">/</span>
         <Link href="/shop" className="transition hover:text-cream">Shop</Link>
         {product.category && (
           <>
-            <span aria-hidden> / </span>
+            <span aria-hidden className="px-1.5">/</span>
             <Link href={`/category/${product.category.slug}`} className="transition hover:text-cream">
               {product.category.name}
             </Link>
           </>
         )}
-        <span aria-hidden> / </span>
+        <span aria-hidden className="px-1.5">/</span>
         <span className="text-muted">{product.name}</span>
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
         <ProductGallery product={product} />
         <div>
           {product.category && (
-            <Link href={`/category/${product.category.slug}`} className="text-xs font-semibold uppercase tracking-wider text-primary">
+            <Link href={`/category/${product.category.slug}`} className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
               {product.category.name}
             </Link>
           )}
-          <h1 className="mt-1 text-3xl font-extrabold leading-tight text-cream">{product.name}</h1>
-          <div className="mt-4">
+          <h1 className="mt-2 text-4xl font-extrabold leading-[1.05] tracking-[-0.02em] text-cream sm:text-5xl">{product.name}</h1>
+          <div className="mt-6">
             <BuyPanel product={product} currency={config.currency} />
           </div>
         </div>
       </div>
 
-      <section aria-labelledby="desc-heading" className="mt-12 rounded-2xl border border-line bg-surface p-6">
-        <h2 id="desc-heading" className="text-xl font-bold text-cream">Description</h2>
+      <section aria-labelledby="desc-heading" className="mt-14 rounded-3xl border border-line/70 bg-surface p-7 sm:p-8">
+        <h2 id="desc-heading" className="text-2xl font-extrabold tracking-tight text-cream">Description</h2>
         <p className="mt-3 whitespace-pre-line leading-relaxed text-muted">{product.description}</p>
         {product.attributes.length > 0 && (
           <table className="mt-5 w-full max-w-lg text-sm">
@@ -138,8 +138,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         )}
       </section>
 
-      <section aria-labelledby="reviews-heading" className="mt-10">
-        <h2 id="reviews-heading" className="text-xl font-bold text-cream">
+      <section aria-labelledby="reviews-heading" className="mt-12">
+        <h2 id="reviews-heading" className="text-2xl font-extrabold tracking-tight text-cream">
           Reviews{product.reviewCount > 0 ? ` (${product.reviewCount})` : ""}
         </h2>
         {reviews.length === 0 ? (
@@ -147,7 +147,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         ) : (
           <ul className="mt-4 space-y-4">
             {reviews.map((review) => (
-              <li key={review._id} className="rounded-2xl border border-line bg-surface p-5">
+              <li key={review._id} className="rounded-3xl border border-line/70 bg-surface p-6">
                 <div className="flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
                     {review.author.name.charAt(0).toUpperCase()}
@@ -172,9 +172,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </section>
 
       {relatedProducts.length > 0 && (
-        <section aria-labelledby="related-heading" className="mt-14">
-          <h2 id="related-heading" className="mb-5 text-2xl font-bold text-cream">Related Products</h2>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <section aria-labelledby="related-heading" className="mt-20">
+          <div className="mb-7">
+            <span aria-hidden className="mb-3 block h-1 w-10 rounded-full bg-primary" />
+            <h2 id="related-heading" className="text-3xl font-extrabold tracking-tight text-cream sm:text-4xl">Related Products</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {relatedProducts.map((related) => (
               <ProductCard key={related._id} product={related} currency={config.currency} />
             ))}

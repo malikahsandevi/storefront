@@ -5,12 +5,18 @@
   --color-ink-2: #22101a;
   --color-surface: #2a1420;
   --color-surface-2: #351a29;
-  --color-line: #462233;
+  --color-line: #40202f;
   --color-primary: #e11d48;
   --color-primary-dark: #be123c;
   --color-cream: #fff1f2;
   --color-muted: #d8a7b4;
   --color-muted-2: #a97e8c;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --shadow-card: 0 24px 48px -24px rgba(0, 0, 0, 0.65);
+  --shadow-glow: 0 12px 32px -10px rgba(225, 29, 72, 0.5);
 }
 
 html {
@@ -18,9 +24,13 @@ html {
 }
 
 body {
-  background: var(--color-ink);
+  background:
+    radial-gradient(64rem 32rem at 50% -12rem, rgba(225, 29, 72, 0.07), transparent 60%),
+    var(--color-ink);
   color: var(--color-cream);
-  font-family: ui-sans-system, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -41,6 +51,12 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary-dark);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 input,

@@ -15,7 +15,7 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
   const current = images[active] || images[0];
   return (
     <div>
-      <div className="relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2">
+      <div className="relative aspect-square overflow-hidden rounded-[1.75rem] border border-line/70 bg-ink-2">
         {current ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={current.url} alt={current.alt || product.name} loading="lazy" className="h-full w-full object-cover" />
@@ -25,21 +25,21 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
           </span>
         )}
         {discountPercent(product) && (
-          <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-sm font-bold text-white">
+          <span className="absolute left-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-white shadow-glow">
             −{discountPercent(product)}%
           </span>
         )}
       </div>
       {images.length > 1 && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex gap-2.5">
           {images.map((image, i) => (
             <button
               key={`${image.url}-${i}`}
               type="button"
               onClick={() => setActive(i)}
               aria-label={`View image ${i + 1}`}
-              className={`h-16 w-16 overflow-hidden rounded-lg border-2 transition ${
-                i === active ? "border-primary" : "border-line hover:border-muted-2"
+              className={`h-20 w-20 overflow-hidden rounded-2xl border-2 transition ${
+                i === active ? "border-primary" : "border-line/70 hover:border-muted-2"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,19 +66,20 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
   return (
     <div>
       <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-extrabold text-cream">{formatMoney(product.price, currency)}</span>
+        <span className="text-[2.6rem] font-extrabold leading-none tracking-tight text-cream">{formatMoney(product.price, currency)}</span>
         {product.comparePrice && product.comparePrice > product.price && (
-          <span className="text-lg text-muted-2 line-through">{formatMoney(product.comparePrice, currency)}</span>
+          <span className="text-xl text-muted-2 line-through">{formatMoney(product.comparePrice, currency)}</span>
         )}
       </div>
-      <p className={`mt-2 text-sm font-medium ${out ? "text-primary" : "text-emerald-400"}`}>
+      <p className={`mt-3 flex items-center gap-2 text-sm font-medium ${out ? "text-primary" : "text-emerald-400"}`}>
+        <span aria-hidden className={`h-2 w-2 rounded-full ${out ? "bg-primary" : "bg-emerald-400"}`} />
         {out ? "Out of stock" : `In stock — ${product.stock} available`}
       </p>
 
       {product.variants.map((group) => (
         <fieldset key={group.name} className="mt-5">
-          <legend className="text-sm font-semibold text-cream">{group.name}</legend>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <legend className="text-sm font-bold text-cream">{group.name}</legend>
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {group.options.map((option) => {
               const selected = variant[group.name] === option;
               return (
@@ -87,10 +88,10 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
                   type="button"
                   onClick={() => setVariant((prev) => ({ ...prev, [group.name]: option }))}
                   aria-pressed={selected}
-                  className={`rounded-full border px-4 py-1.5 text-sm transition ${
+                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                     selected
-                      ? "border-primary bg-primary text-white"
-                      : "border-line bg-surface text-muted hover:border-primary hover:text-cream"
+                      ? "border-primary bg-primary text-white shadow-glow"
+                      : "border-line/80 bg-surface text-muted hover:border-primary hover:text-cream"
                   }`}
                 >
                   {option}
@@ -101,13 +102,13 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
         </fieldset>
       ))}
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <div className="flex items-center rounded-full border border-line">
+      <div className="mt-7 flex flex-wrap items-center gap-3">
+        <div className="flex items-center rounded-full border border-line/80 bg-surface">
           <button
             type="button"
             aria-label="Decrease quantity"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="px-3 py-2 text-lg text-muted transition hover:text-cream"
+            className="px-3.5 py-2.5 text-lg text-muted transition hover:text-cream"
           >
             −
           </button>
@@ -116,7 +117,7 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
             type="button"
             aria-label="Increase quantity"
             onClick={() => setQty((q) => Math.min(product.stock || q + 1, q + 1))}
-            className="px-3 py-2 text-lg text-muted transition hover:text-cream"
+            className="px-3.5 py-2.5 text-lg text-muted transition hover:text-cream"
           >
             +
           </button>
@@ -129,8 +130,8 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
             setAdded(true);
             setTimeout(() => setAdded(false), 1500);
           }}
-          className={`flex-1 rounded-full px-6 py-2.5 font-bold transition ${
-            out ? "cursor-not-allowed bg-surface-2 text-muted-2" : "bg-primary text-white hover:bg-primary-dark"
+          className={`flex-1 rounded-full px-6 py-3 text-[15px] font-bold transition ${
+            out ? "cursor-not-allowed bg-surface-2 text-muted-2" : "bg-primary text-white shadow-glow hover:bg-primary-dark active:scale-[0.98]"
           }`}
         >
           {out ? "Out of Stock" : added ? "Added to Cart ✓" : "Add to Cart"}
@@ -139,10 +140,10 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
           type="button"
           onClick={() => toggleWishlist(product)}
           aria-pressed={wishlisted}
-          className={`rounded-full border px-5 py-2.5 font-semibold transition ${
+          className={`rounded-full border px-5 py-3 font-semibold transition ${
             wishlisted
-              ? "border-primary bg-primary text-white"
-              : "border-line text-muted hover:border-primary hover:text-cream"
+              ? "border-primary bg-primary text-white shadow-glow"
+              : "border-line/80 text-muted hover:border-primary hover:text-cream"
           }`}
         >
           {wishlisted ? "♥ Wishlisted" : "♡ Wishlist"}
@@ -155,7 +156,7 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
           {product.averageRating.toFixed(1)} · {product.reviewCount} {product.reviewCount === 1 ? "review" : "reviews"}
         </p>
       )}
-      <dl className="mt-4 space-y-1 text-sm text-muted">
+      <dl className="mt-6 space-y-1.5 border-t border-line/60 pt-5 text-sm text-muted">
         <div className="flex gap-2">
           <dt className="text-muted-2">SKU:</dt>
           <dd>{product.sku}</dd>

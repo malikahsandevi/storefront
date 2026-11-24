@@ -7,8 +7,8 @@ import { apiCall, type CustomerAddress, type CustomerProfile } from "@/lib/api";
 import { useShop } from "@/lib/store";
 
 const inputCls =
-  "w-full rounded-lg border border-line bg-ink-2 px-3 py-2 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-2";
+  "w-full rounded-xl border border-line/80 bg-ink-2/80 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-2";
 
 const emptyAddress: CustomerAddress = {
   street: "", city: "", state: "", zipCode: "", country: "Pakistan", isDefault: false,
@@ -72,7 +72,7 @@ export default function AccountPage() {
   return (
     <div className="py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold text-cream">My Account</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight text-cream">My Account</h1>
         <div className="flex gap-2">
           <Link href="/account/orders" className="rounded-full border border-line px-5 py-2 text-sm font-semibold text-muted transition hover:border-primary hover:text-cream">
             My Orders
@@ -102,8 +102,8 @@ export default function AccountPage() {
       {error && <p className="mt-4 text-sm text-primary" role="alert">{error}</p>}
 
       <form onSubmit={save} className="mt-6 space-y-6">
-        <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="profile-h">
-          <h2 id="profile-h" className="font-bold text-cream">Profile</h2>
+        <section className="rounded-3xl border border-line/70 bg-surface p-6" aria-labelledby="profile-h">
+          <h2 id="profile-h" className="text-lg font-extrabold tracking-tight text-cream">Profile</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
               <label htmlFor="ac-first" className={labelCls}>First name</label>
@@ -120,9 +120,9 @@ export default function AccountPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="addr-h">
+        <section className="rounded-3xl border border-line/70 bg-surface p-6" aria-labelledby="addr-h">
           <div className="flex items-center justify-between">
-            <h2 id="addr-h" className="font-bold text-cream">Address Book</h2>
+            <h2 id="addr-h" className="text-lg font-extrabold tracking-tight text-cream">Address Book</h2>
             <button
               type="button"
               onClick={() => setAddresses((prev) => [...prev, { ...emptyAddress }])}
@@ -136,7 +136,7 @@ export default function AccountPage() {
           )}
           <div className="mt-4 space-y-4">
             {addresses.map((address, i) => (
-              <fieldset key={i} className="rounded-xl border border-line bg-ink-2 p-4">
+              <fieldset key={i} className="rounded-2xl border border-line/70 bg-ink-2/70 p-5">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="sm:col-span-2">
                     <label className={labelCls} htmlFor={`addr-${i}-street`}>Street address</label>
@@ -185,7 +185,7 @@ export default function AccountPage() {
         </section>
 
         {message && <p className="text-sm text-emerald-400" role="status">{message}</p>}
-        <button type="submit" disabled={saving} className="rounded-full bg-primary px-8 py-2.5 font-bold text-white transition hover:bg-primary-dark disabled:opacity-60">
+        <button type="submit" disabled={saving} className="rounded-full bg-primary px-9 py-3 font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-60">
           {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>

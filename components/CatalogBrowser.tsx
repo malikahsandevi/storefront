@@ -58,13 +58,13 @@ export default function CatalogBrowser({
 }) {
   const topCategories = categories.filter((c) => !c.parent);
   const inputCls =
-    "w-full rounded-lg border border-line bg-ink-2 px-3 py-2 text-sm text-cream placeholder:text-muted-2";
-  const labelCls = "mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-2";
+    "w-full rounded-xl border border-line/80 bg-ink-2/80 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+  const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-2";
 
   return (
     <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
       <aside className="lg:sticky lg:top-32 lg:self-start">
-        <form method="get" action={basePath} className="space-y-4 rounded-2xl border border-line bg-surface p-4">
+        <form method="get" action={basePath} className="space-y-4 rounded-3xl border border-line/70 bg-surface p-5">
           <div>
             <label htmlFor="f-q" className={labelCls}>Search</label>
             <input id="f-q" name="q" type="search" defaultValue={filters.q || ""} placeholder="Product name…" className={inputCls} />
@@ -103,7 +103,7 @@ export default function CatalogBrowser({
               ))}
             </select>
           </div>
-          <button type="submit" className="w-full rounded-full bg-primary py-2 text-sm font-bold text-white transition hover:bg-primary-dark">
+          <button type="submit" className="w-full rounded-full bg-primary py-2.5 text-sm font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.98]">
             Apply Filters
           </button>
           <Link href={basePath} className="block text-center text-xs text-muted transition hover:text-cream">
@@ -112,14 +112,14 @@ export default function CatalogBrowser({
         </form>
         {/* Category quick links (server-rendered, crawlable) */}
         {!lockedCategory && topCategories.length > 0 && (
-          <nav aria-label="Categories" className="mt-4 rounded-2xl border border-line bg-surface p-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-2">Categories</p>
-            <ul className="space-y-1 text-sm">
+          <nav aria-label="Categories" className="mt-4 rounded-3xl border border-line/70 bg-surface p-5">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-2">Categories</p>
+            <ul className="space-y-0.5 text-sm">
               {topCategories.map((category) => (
                 <li key={category._id}>
                   <Link
                     href={`/category/${category.slug}`}
-                    className={`transition hover:text-cream ${filters.category === category.slug ? "font-bold text-primary" : "text-muted"}`}
+                    className={`-mx-2.5 block rounded-lg px-2.5 py-1.5 transition hover:bg-ink-2 hover:text-cream ${filters.category === category.slug ? "font-bold text-primary" : "text-muted"}`}
                   >
                     {category.name}
                     <span className="text-muted-2"> ({category.productsCount})</span>
@@ -137,15 +137,15 @@ export default function CatalogBrowser({
           {filters.q ? <> for “{filters.q}”</> : null}
         </p>
         {products.length === 0 ? (
-          <div className="rounded-2xl border border-line bg-surface p-10 text-center">
+          <div className="rounded-3xl border border-line/70 bg-surface p-12 text-center">
             <p className="font-semibold text-cream">No products match your filters.</p>
             <p className="mt-1 text-sm text-muted">Try a different search or clear the filters.</p>
-            <Link href={basePath} className="mt-4 inline-block rounded-full bg-primary px-6 py-2 text-sm font-bold text-white transition hover:bg-primary-dark">
+            <Link href={basePath} className="mt-5 inline-block rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-glow transition hover:bg-primary-dark">
               Clear Filters
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} currency={currency} />
             ))}
@@ -155,15 +155,15 @@ export default function CatalogBrowser({
         {pages > 1 && (
           <nav className="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
             {page > 1 && (
-              <Link href={pageHref(basePath, filters, page - 1)} className="rounded-full border border-line px-4 py-2 text-sm text-muted transition hover:border-primary hover:text-cream">
+              <Link href={pageHref(basePath, filters, page - 1)} className="rounded-full border border-line px-5 py-2.5 text-sm font-medium text-muted transition hover:border-primary hover:text-cream">
                 ← Previous
               </Link>
             )}
-            <span className="px-2 text-sm text-muted">
+            <span className="rounded-full border border-line/60 bg-surface px-4 py-2 text-sm text-muted">
               Page {page} of {pages}
             </span>
             {page < pages && (
-              <Link href={pageHref(basePath, filters, page + 1)} className="rounded-full border border-line px-4 py-2 text-sm text-muted transition hover:border-primary hover:text-cream">
+              <Link href={pageHref(basePath, filters, page + 1)} className="rounded-full border border-line px-5 py-2.5 text-sm font-medium text-muted transition hover:border-primary hover:text-cream">
                 Next →
               </Link>
             )}

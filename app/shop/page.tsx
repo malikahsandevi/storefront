@@ -42,8 +42,9 @@ export default async function ShopPage({
   ]);
 
   return (
-    <div className="py-8">
-      <h1 className="mb-6 text-3xl font-extrabold text-cream">Shop</h1>
+    <div className="py-10">
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Catalog</p>
+      <h1 className="mb-8 mt-2 text-4xl font-extrabold tracking-tight text-cream sm:text-5xl">Shop</h1>
       <CatalogBrowser
         basePath="/shop"
         categories={categories}
