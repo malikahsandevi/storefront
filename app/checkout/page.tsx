@@ -124,9 +124,9 @@ export default function CheckoutPage() {
   if (ready && cart.length === 0 && !placed) {
     return (
       <div className="py-16 text-center">
-        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">Checkout</h1>
+        <h1 className="font-display text-[clamp(2.1rem,4.5vw,3rem)] font-normal leading-[1.05] tracking-[-0.02em] text-cream">Checkout</h1>
         <p className="mt-3 text-muted">Your cart is empty — add something first.</p>
-        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
           Go to Shop
         </Link>
       </div>
@@ -137,7 +137,7 @@ export default function CheckoutPage() {
     return (
       <div className="mx-auto max-w-xl py-16 text-center">
         <p aria-hidden className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-4xl text-primary ring-1 ring-primary/40">✓</p>
-        <h1 className="mt-4 font-display text-4xl font-black uppercase tracking-tight text-cream">Order placed — thank you!</h1>
+        <h1 className="mt-4 font-display text-[clamp(2.1rem,4.5vw,3rem)] font-normal leading-[1.05] tracking-[-0.02em] text-cream">Order placed — thank you!</h1>
         <p className="mt-3 text-muted">
           Your order number is <span className="font-bold text-cream">{placed.orderNumber}</span>.
           Keep it safe — you can track your order any time with this number and your email.
@@ -148,7 +148,7 @@ export default function CheckoutPage() {
           <div className="flex justify-between"><dt className="text-muted">Status</dt><dd className="text-cream">{placed.status}</dd></div>
         </dl>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/track-order" className="btn-primary-pill btn-shine px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+          <Link href="/track-order" className="btn-primary-pill btn-shine px-6 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
             Track Order
           </Link>
           {user && (
@@ -191,11 +191,11 @@ export default function CheckoutPage() {
 
   return (
     <div className="py-8">
-      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Checkout</h1>
+      <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">Checkout</h1>
       <form onSubmit={placeOrder} className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           <section className="vault-panel p-6" aria-labelledby="contact-h">
-            <h2 id="contact-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">1</span>Contact</h2>
+            <h2 id="contact-h" className="flex items-center font-display text-xl font-medium tracking-[-0.01em] text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">1</span>Contact</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="co-first" className={labelCls}>First name *</label>
@@ -243,7 +243,7 @@ export default function CheckoutPage() {
           </section>
 
           <section className="vault-panel p-6" aria-labelledby="ship-h">
-            <h2 id="ship-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">2</span>Shipping Address</h2>
+            <h2 id="ship-h" className="flex items-center font-display text-xl font-medium tracking-[-0.01em] text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">2</span>Shipping Address</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="co-street" className={labelCls}>Street address *</label>
@@ -270,7 +270,7 @@ export default function CheckoutPage() {
 
           {shipping && shipping.configured && (
             <section className="vault-panel p-6" aria-labelledby="delivery-h">
-              <h2 id="delivery-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">3</span>Delivery</h2>
+              <h2 id="delivery-h" className="flex items-center font-display text-xl font-medium tracking-[-0.01em] text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">3</span>Delivery</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="co-method" className={labelCls}>Shipping method</label>
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
           )}
 
           <section className="vault-panel p-6" aria-labelledby="pay-h">
-            <h2 id="pay-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">4</span>Payment</h2>
+            <h2 id="pay-h" className="flex items-center font-display text-xl font-medium tracking-[-0.01em] text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">4</span>Payment</h2>
             <div className="mt-3 space-y-2">
               {(config?.paymentMethods.length ? config.paymentMethods : [{ name: "Cash on Delivery", description: "" }]).map((method) => (
                 <label key={method.name} className="flex cursor-pointer items-center gap-3 rounded-2xl border border-line bg-ink-2 px-4 py-3.5 text-sm transition hover:border-primary/70 has-[:checked]:border-primary has-[:checked]:bg-primary/10">
@@ -321,7 +321,7 @@ export default function CheckoutPage() {
         </div>
 
         <aside className="vault-panel h-fit p-6 lg:sticky lg:top-40">
-          <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Order Summary</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Order Summary</h2>
           <ul className="mt-3 space-y-2 text-sm">
             {cart.map((line) => (
               <li key={`${line.productId}-${line.variant || ""}`} className="flex justify-between gap-3">
@@ -363,7 +363,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={placing || !quote}
-            className="btn-primary-pill btn-shine mt-5 w-full py-4 font-display text-sm font-bold uppercase tracking-[0.1em] disabled:opacity-60"
+            className="btn-primary-pill btn-shine mt-5 w-full py-4 font-display text-sm font-semibold uppercase tracking-[0.08em] disabled:opacity-60"
           >
             {placing ? "Placing order…" : "Place Order"}
           </button>

@@ -103,7 +103,7 @@ export default function CatalogBrowser({
               ))}
             </select>
           </div>
-          <button type="submit" className="btn-primary-pill btn-shine w-full py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+          <button type="submit" className="btn-primary-pill btn-shine w-full py-3 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
             Apply Filters
           </button>
           <Link href={basePath} className="block text-center text-xs text-muted transition hover:text-cream">
@@ -140,7 +140,7 @@ export default function CatalogBrowser({
           <div className="vault-panel p-12 text-center">
             <p className="font-semibold text-cream">No products match your filters.</p>
             <p className="mt-1 text-sm text-muted">Try a different search or clear the filters.</p>
-            <Link href={basePath} className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+            <Link href={basePath} className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
               Clear Filters
             </Link>
           </div>

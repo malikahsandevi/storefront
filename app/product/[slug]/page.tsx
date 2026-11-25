@@ -115,7 +115,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.category.name}
             </Link>
           )}
-          <h1 className="mt-2 font-display text-4xl font-extrabold uppercase leading-[1.02] tracking-tight text-cream sm:text-5xl">{product.name}</h1>
+          <h1 className="mt-3 font-display text-[clamp(1.9rem,3vw,2.6rem)] font-normal leading-[1.05] tracking-[-0.02em] text-cream">{product.name}</h1>
           <div className="mt-6">
             <BuyPanel product={product} currency={config.currency} />
           </div>

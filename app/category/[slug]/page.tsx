@@ -73,8 +73,16 @@ export default async function CategoryPage({
         <span className="mono-label text-muted-2">Category</span>
         <span aria-hidden className="kicker-bar" />
       </div>
-      <h1 className="mt-3 font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">{category.name}</h1>
+      <h1 className="mt-3 font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">{category.name}</h1>
       {category.description && <p className="mt-3 max-w-[60ch] text-[17px] leading-[1.65] text-muted">{category.description}</p>}
+      <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+        <li className="flex items-center gap-2">
+          <span aria-hidden className="font-bold text-primary">✓</span> Order tracking on every purchase
+        </li>
+        <li className="flex items-center gap-2">
+          <span aria-hidden className="font-bold text-primary">✓</span> Transparent pricing, confirmed at checkout
+        </li>
+      </ul>
       <div className="mt-8">
         <CatalogBrowser
           basePath={`/category/${slug}`}

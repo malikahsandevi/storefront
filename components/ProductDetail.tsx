@@ -86,7 +86,7 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
   return (
     <div>
       <div className="flex items-baseline gap-3">
-        <span className="font-display text-[2.6rem] font-black leading-none tracking-tight text-cream">{formatMoney(product.price, currency)}</span>
+        <span className="font-display text-[2.6rem] font-semibold leading-none tracking-[-0.01em] text-cream">{formatMoney(product.price, currency)}</span>
         {product.comparePrice && product.comparePrice > product.price && (
           <span className="text-xl text-muted-2 line-through">{formatMoney(product.comparePrice, currency)}</span>
         )}

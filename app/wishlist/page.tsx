@@ -18,9 +18,9 @@ export default function WishlistPage() {
   if (wishlist.length === 0) {
     return (
       <div className="py-16 text-center">
-        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">Wishlist</h1>
+        <h1 className="font-display text-[clamp(2.1rem,4.5vw,3rem)] font-normal leading-[1.05] tracking-[-0.02em] text-cream">Wishlist</h1>
         <p className="mt-3 text-muted">You have not saved any products yet.</p>
-        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
           Browse Products
         </Link>
       </div>
@@ -29,7 +29,7 @@ export default function WishlistPage() {
 
   return (
     <div className="py-8">
-      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Wishlist</h1>
+      <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">Wishlist</h1>
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {wishlist.map((entry) => {
           const like: ProductLike = {

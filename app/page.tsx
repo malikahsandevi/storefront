@@ -25,42 +25,51 @@ export default async function HomePage() {
 
   return (
     <div className="pb-6">
-      {/* Hero — magazine cover: display type first, product as the plate. */}
-      <section className="pt-5 sm:pt-6">
-        <div data-hero-fade className="flex items-center justify-between gap-4 border-t-2 border-cream/80 pt-4 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-2">
-          <span>{config.tagline || name}</span>
-          <span className="hidden sm:block">{name} — Online Store</span>
-        </div>
-
-        <h1 className="mt-7 font-display text-[13vw] font-black uppercase leading-[0.95] tracking-[-0.02em] text-cream sm:text-7xl lg:text-[6.4rem]">
-          <span className="block overflow-hidden pb-1">
-            <span data-hero-line className="block">Upgrade Your</span>
-          </span>{" "}
-          <span className="block overflow-hidden pb-1">
-            <span data-hero-line className="block">Everyday</span>
-          </span>{" "}
-          <span className="block overflow-hidden pb-2">
-            <span data-hero-line className="block">
-              Tech<span aria-hidden className="text-primary">.</span>
-            </span>
-          </span>
-        </h1>
-
-        <div className="mt-10 grid items-start gap-10 lg:grid-cols-12">
+      {/* Hero — the hodl composition: badge pill, stacked display
+          lines (last line in the accent gradient), lead, pill CTAs,
+          checklist, and the product plate over layered glows. Copy,
+          links and GSAP hooks are the store's own. */}
+      <section className="relative pt-10 sm:pt-14">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-28 left-1/2 h-96 w-[62rem] max-w-none -translate-x-1/2 rounded-full blur-2xl bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--sf-primary)_13%,transparent),transparent)]"
+        />
+        <div className="relative grid items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <p data-hero-fade className="max-w-xl text-base leading-relaxed text-muted sm:text-lg">
+            <p
+              data-hero-fade
+              className="inline-flex items-center gap-2.5 rounded-full border border-line py-2 pl-3 pr-4 bg-[color-mix(in_srgb,var(--sf-text)_3%,transparent)]"
+            >
+              <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-primary shadow-glow" />
+              <span className="mono-label text-[11.5px] text-cream/85">{config.tagline || name}</span>
+            </p>
+
+            <h1 className="mt-7 font-display text-[clamp(2.9rem,7.2vw,5rem)] font-semibold uppercase leading-[1.03] tracking-[-0.03em] text-cream">
+              <span className="block overflow-hidden pb-1">
+                <span data-hero-line className="block">Upgrade Your</span>
+              </span>{" "}
+              <span className="block overflow-hidden pb-1">
+                <span data-hero-line className="block">Everyday</span>
+              </span>{" "}
+              <span className="block overflow-hidden pb-2">
+                <span data-hero-line className="block">
+                  <span className="grad-text">Tech.</span>
+                </span>
+              </span>
+            </h1>
+            <p data-hero-fade className="mt-6 max-w-[31em] text-[clamp(0.97rem,1.22vw,1.125rem)] leading-[1.65] text-muted">
               Headphones, speakers and everyday electronics — real products, honest prices, delivered to your door.
             </p>
-            <div data-hero-fade className="mt-8 flex flex-wrap items-center gap-4">
+            <div data-hero-fade className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 href="/shop"
-                className="inline-block bg-primary px-9 py-4 font-display text-sm font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.98]"
+                className="btn-primary-pill btn-shine inline-flex min-h-[54px] items-center gap-2.5 px-[26px] font-display text-sm font-semibold uppercase tracking-[0.08em]"
               >
-                Shop Now
+                Shop Now <span aria-hidden>→</span>
               </Link>
               <Link
                 href="#categories"
-                className="inline-block border-b-2 border-cream/70 pb-1 font-display text-sm font-bold uppercase tracking-[0.1em] text-cream transition hover:border-primary hover:text-primary"
+                className="btn-ghost-pill inline-flex min-h-[54px] items-center px-[26px] font-display text-sm font-semibold uppercase tracking-[0.08em] text-cream"
               >
                 Browse Categories
               </Link>
@@ -78,7 +87,7 @@ export default async function HomePage() {
           {heroProduct && (
             <figure data-hero-fade className="lg:col-span-5">
               <Link href={`/product/${heroProduct.slug}`} className="group block">
-                <span className="relative block aspect-[4/3] overflow-hidden bg-ink-2">
+                <span className="media-glow relative block aspect-[4/3] overflow-hidden rounded-[24px] border border-line">
                   <span data-parallax className="absolute left-0 top-[-10%] block h-[120%] w-full">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -100,6 +109,33 @@ export default async function HomePage() {
             </figure>
           )}
         </div>
+      </section>
+
+      {/* Facts strip — hodl's quiet mono ledger under the hero,
+          filled with this store's real catalog facts. */}
+      <section data-reveal aria-label="Store facts" className="mt-16 border-y border-line">
+        <dl className="grid grid-cols-1 gap-x-8 gap-y-3 py-5 sm:grid-cols-3">
+          <div className="flex items-baseline justify-between gap-4 sm:justify-start sm:gap-6">
+            <dt className="mono-label text-muted-2">Catalog</dt>
+            <dd className="text-sm text-cream">
+              {featured.total} {featured.total === 1 ? "product" : "products"}
+            </dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-4 sm:justify-start sm:gap-6">
+            <dt className="mono-label text-muted-2">Categories</dt>
+            <dd className="text-sm text-cream">
+              {categories.filter((c) => !c.parent).length} categories
+            </dd>
+          </div>
+          {config.paymentMethods.length > 0 && (
+            <div className="flex items-baseline justify-between gap-4 sm:justify-start sm:gap-6">
+              <dt className="mono-label shrink-0 text-muted-2">Pay with</dt>
+              <dd className="truncate text-sm text-cream">
+                {config.paymentMethods.map((m) => m.name).join(" · ")}
+              </dd>
+            </div>
+          )}
+        </dl>
       </section>
 
       {/* Category bento (V4) */}
@@ -169,7 +205,7 @@ export default async function HomePage() {
           %
         </span>
         <div className="relative max-w-xl">
-          <h2 className="font-display text-4xl font-black uppercase tracking-tight text-white sm:text-6xl">Up to 30% Off Audio</h2>
+          <h2 className="font-display text-[clamp(2rem,4.4vw,3.875rem)] font-normal leading-[1.04] tracking-[-0.02em] text-white [text-wrap:balance]">Up to 30% Off Audio</h2>
           <p className="mt-3 max-w-md text-base text-white/85">
             Selected headphones and speakers at their lowest prices — while stock lasts.
           </p>

@@ -55,9 +55,9 @@ export default function CartPage() {
   if (cart.length === 0) {
     return (
       <div className="py-16 text-center">
-        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">Your Cart</h1>
+        <h1 className="font-display text-[clamp(2.1rem,4.5vw,3rem)] font-normal leading-[1.05] tracking-[-0.02em] text-cream">Your Cart</h1>
         <p className="mt-3 text-muted">Your cart is empty.</p>
-        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
           Start Shopping
         </Link>
       </div>
@@ -66,7 +66,7 @@ export default function CartPage() {
 
   return (
     <div className="py-8">
-      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Your Cart</h1>
+      <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">Your Cart</h1>
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <ul className="vault-panel h-fit divide-y divide-line overflow-hidden">
           {cart.map((line) => (
@@ -104,7 +104,7 @@ export default function CartPage() {
         </ul>
 
         <aside className="vault-panel h-fit p-6 lg:sticky lg:top-40">
-          <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Order Summary</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Order Summary</h2>
           <form
             className="mt-4 flex gap-2"
             onSubmit={(e) => {
@@ -144,7 +144,7 @@ export default function CartPage() {
               <dd className="font-extrabold text-cream">{formatMoney(total, currency)}</dd>
             </div>
           </dl>
-          <Link href="/checkout" className="btn-primary-pill btn-shine mt-5 block py-4 text-center font-display text-sm font-bold uppercase tracking-[0.1em]">
+          <Link href="/checkout" className="btn-primary-pill btn-shine mt-5 block py-4 text-center font-display text-sm font-semibold uppercase tracking-[0.08em]">
             Proceed to Checkout
           </Link>
           <ul className="mt-5 space-y-2 border-t border-line pt-4 text-sm text-muted">

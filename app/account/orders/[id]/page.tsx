@@ -32,9 +32,9 @@ export default function MyOrderDetailPage() {
   if (error) {
     return (
       <div className="py-16 text-center">
-        <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight text-cream">Order not found</h1>
+        <h1 className="font-display text-2xl font-medium tracking-[-0.01em] text-cream">Order not found</h1>
         <p className="mt-2 text-muted">{error}</p>
-        <Link href="/account/orders" className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+        <Link href="/account/orders" className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
           Back to My Orders
         </Link>
       </div>
@@ -46,7 +46,7 @@ export default function MyOrderDetailPage() {
     <div className="mx-auto max-w-2xl py-8">
       <Link href="/account/orders" className="text-sm text-muted transition hover:text-cream">← My Orders</Link>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">{order.orderNumber}</h1>
+        <h1 className="font-display text-[clamp(2.1rem,4.5vw,3rem)] font-normal leading-[1.05] tracking-[-0.02em] text-cream">{order.orderNumber}</h1>
         <span className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white">{order.status}</span>
       </div>
       <p className="mt-1 text-sm text-muted">
@@ -54,7 +54,7 @@ export default function MyOrderDetailPage() {
       </p>
 
       <section className="vault-panel mt-6 p-6">
-        <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Items</h2>
+        <h2 className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Items</h2>
         <ul className="mt-3 space-y-3">
           {order.items.map((item, i) => (
             <li key={i} className="flex items-center gap-3 text-sm">
@@ -80,7 +80,7 @@ export default function MyOrderDetailPage() {
 
       {order.shippingAddress && (
         <section className="vault-panel mt-4 p-6">
-          <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Delivery Address</h2>
+          <h2 className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Delivery Address</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
             {order.shippingAddress.zipCode}, {order.shippingAddress.country}

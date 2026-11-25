@@ -72,7 +72,7 @@ export default function AccountPage() {
   return (
     <div className="py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">My Account</h1>
+        <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">My Account</h1>
         <div className="flex gap-2">
           <Link href="/account/orders" className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream">
             My Orders
@@ -107,7 +107,7 @@ export default function AccountPage() {
             <span aria-hidden className="mono-label text-primary">01</span>
             <span aria-hidden className="kicker-bar" />
           </div>
-          <h2 id="profile-h" className="mt-2 font-display text-lg font-extrabold uppercase tracking-tight text-cream">Profile</h2>
+          <h2 id="profile-h" className="mt-2 font-display text-xl font-medium tracking-[-0.01em] text-cream">Profile</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
               <label htmlFor="ac-first" className={labelCls}>First name</label>
@@ -130,7 +130,7 @@ export default function AccountPage() {
             <span aria-hidden className="kicker-bar" />
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <h2 id="addr-h" className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Address Book</h2>
+            <h2 id="addr-h" className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Address Book</h2>
             <button
               type="button"
               onClick={() => setAddresses((prev) => [...prev, { ...emptyAddress }])}
@@ -193,7 +193,7 @@ export default function AccountPage() {
         </section>
 
         {message && <p className="text-sm text-emerald-400" role="status">{message}</p>}
-        <button type="submit" disabled={saving} className="btn-primary-pill btn-shine px-9 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] disabled:opacity-60">
+        <button type="submit" disabled={saving} className="btn-primary-pill btn-shine px-9 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em] disabled:opacity-60">
           {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>

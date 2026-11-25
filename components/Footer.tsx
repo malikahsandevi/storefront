@@ -23,12 +23,12 @@ export default function Footer({
 
   return (
     <footer className="mt-24 border-t border-line bg-ink-2">
-      <div className="mx-auto max-w-7xl px-4 pb-9 pt-[72px] sm:px-6 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+      <div className="wrap-x pb-9 pt-[72px]">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.15fr_2fr_1.2fr]">
           <div>
             <p className="font-display text-xl font-black uppercase tracking-tight text-cream">{name}</p>
             {config.tagline && (
-              <p className="mt-3 max-w-[30ch] font-display text-[17px] font-semibold leading-snug text-cream">
+              <p className="mt-3 max-w-[30ch] font-display text-[17px] font-medium leading-snug text-cream">
                 {config.tagline}
               </p>
             )}
@@ -45,6 +45,7 @@ export default function Footer({
             </ul>
           </div>
 
+          <div className="grid grid-cols-2 gap-10">
           <nav aria-label="Shop">
             <p className={headingCls}>Shop</p>
             <ul className="mt-4 space-y-2.5 text-sm text-muted">
@@ -69,6 +70,7 @@ export default function Footer({
               <li><Link className={linkCls} href="/cart">Cart</Link></li>
             </ul>
           </nav>
+          </div>
 
           <div>
             <p className={headingCls}>Contact</p>
@@ -95,7 +97,7 @@ export default function Footer({
         </div>
       </div>
       <div className="border-t border-line">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-muted-2 sm:px-6 lg:px-8">
+        <div className="wrap-x flex flex-wrap items-center justify-between gap-2 py-5 text-xs text-muted-2">
           <p>
             © <Year /> {name}. All rights reserved.
           </p>

@@ -31,13 +31,13 @@ export default function MyOrdersPage() {
 
   return (
     <div className="py-8">
-      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">My Orders</h1>
+      <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">My Orders</h1>
       {error && <p className="mt-4 text-sm text-primary" role="alert">{error}</p>}
       {orders === null && !error && <p className="mt-6 text-muted">Loading your orders…</p>}
       {orders !== null && orders.length === 0 && (
         <div className="vault-panel mt-6 p-12 text-center">
           <p className="font-semibold text-cream">You have not placed any orders yet.</p>
-          <Link href="/shop" className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
+          <Link href="/shop" className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.08em]">
             Start Shopping
           </Link>
         </div>

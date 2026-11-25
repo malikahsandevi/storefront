@@ -66,6 +66,19 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
+/* The hodl wrap: a 1440px frame with 32px gutters (16px on small
+   screens) — header, main and footer all align to it. */
+.wrap-x {
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+@media (min-width: 640px) {
+  .wrap-x {
+    padding-inline: 32px;
+  }
+}
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -116,6 +129,15 @@ button.vault-panel:hover {
 /* The accent gradient (primary → secondary) as a background. */
 .grad-primary {
   background-image: linear-gradient(110deg, var(--sf-primary), var(--sf-secondary));
+}
+
+/* The same gradient clipped into text — hodl's signature for the
+   emphasised word inside a big display heading. */
+.grad-text {
+  background-image: linear-gradient(110deg, var(--sf-primary), var(--sf-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Product card ("vcard"): vault panel that tints its border to the

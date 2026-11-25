@@ -41,7 +41,7 @@ export default function TrackOrderPage() {
 
   return (
     <div className="mx-auto max-w-2xl py-10">
-      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Track Your Order</h1>
+      <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">Track Your Order</h1>
       <p className="mt-3 text-muted">
         Enter the order number from your confirmation and the email you ordered with — no account needed.
       </p>
@@ -54,7 +54,7 @@ export default function TrackOrderPage() {
           <label htmlFor="to-email" className={labelCls}>Email *</label>
           <input id="to-email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputCls} />
         </div>
-        <button type="submit" disabled={busy} className="btn-primary-pill btn-shine px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] disabled:opacity-60 sm:col-span-2 sm:w-fit">
+        <button type="submit" disabled={busy} className="btn-primary-pill btn-shine px-8 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em] disabled:opacity-60 sm:col-span-2 sm:w-fit">
           {busy ? "Looking up…" : "Track Order"}
         </button>
       </form>

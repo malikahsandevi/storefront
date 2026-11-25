@@ -51,7 +51,7 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
         }
       }}
     >
-      <h3 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Write a review</h3>
+      <h3 className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Write a review</h3>
       <div className="mt-3 flex items-center gap-1" role="radiogroup" aria-label="Your rating">
         {[1, 2, 3, 4, 5].map((star) => (
           <button

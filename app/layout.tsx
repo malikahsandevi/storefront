@@ -53,7 +53,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const archivo = Archivo({
   subsets: ["latin"],
   variable: "--font-archivo",
-  weight: ["500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -72,8 +72,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col bg-ink font-sans text-cream">
         <ShopProvider>
-          <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} />
-          <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8">{children}</main>
+          <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} contactEmail={config.contactEmail} phone={config.phone} />
+          <main className="wrap-x w-full flex-1">{children}</main>
           <Footer config={config} categories={categories} />
         </ShopProvider>
         <Motion />

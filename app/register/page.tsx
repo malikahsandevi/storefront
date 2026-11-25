@@ -25,7 +25,7 @@ export default function RegisterPage() {
         <span className="mono-label text-muted-2">Account</span>
         <span aria-hidden className="kicker-bar" />
       </div>
-      <h1 className="mt-3 font-display text-5xl font-black uppercase tracking-tight text-cream">Create Account</h1>
+      <h1 className="mt-3 font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">Create Account</h1>
       <p className="mt-2 text-sm text-muted">
         Already have an account? <Link href="/login" className="font-semibold text-primary hover:text-cream">Sign in</Link>
       </p>
@@ -65,7 +65,7 @@ export default function RegisterPage() {
           <p className="mt-1 text-xs text-muted-2">At least 6 characters.</p>
         </div>
         {error && <p className="text-sm text-primary" role="alert">{error}</p>}
-        <button type="submit" disabled={busy} className="btn-primary-pill btn-shine w-full py-3.5 font-display text-sm font-bold uppercase tracking-[0.1em] disabled:opacity-60">
+        <button type="submit" disabled={busy} className="btn-primary-pill btn-shine w-full py-4 font-display text-sm font-semibold uppercase tracking-[0.08em] disabled:opacity-60">
           {busy ? "Creating account…" : "Create Account"}
         </button>
       </form>
