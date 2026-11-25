@@ -2977,6 +2977,47 @@ a.tick__fact:hover {
   font-size: 15px;
   color: var(--sf-muted);
 }
+/* Mega panel grow/shrink (Ahsan, 2026-11-25 23:59): the card
+   opens by growing out of the pill item that opened it — its
+   transform-origin is set inline from that item's measured
+   centre — and on close it shrinks back into the same item
+   before unmounting. The wrapper's generic panelin is disabled
+   for the mega so only the card moves. */
+.hdr__mega {
+  animation: none;
+}
+@keyframes mega-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes mega-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+}
+.hdr__mega-card--in {
+  animation: mega-in 0.22s ease-out;
+}
+.hdr__mega-card--out {
+  animation: mega-out 0.18s ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hdr__mega-card--in,
+  .hdr__mega-card--out {
+    animation: none;
+  }
+}
 @media (max-width: 1199px) {
   .hdr__mega {
     display: none;

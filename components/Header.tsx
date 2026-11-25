@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
@@ -86,6 +86,73 @@ export default function Header({
     : -1;
   const megaProduct = megaCategory ? featured[String(megaCategory._id)] : undefined;
 
+  /* Mega panel open/close ANIMATION (Ahsan, 2026-11-25 23:59): the
+     popup grows out of the pill item that opened it and shrinks back
+     into it. `mega` stays set through the short exit so the panel
+     can animate before unmounting; the transform origin is the
+     opening item's centre measured against the panel card's box.
+     All helpers touch only refs + setState, so the first-render
+     closures captured by the global key handler stay valid. */
+  const [megaClosing, setMegaClosing] = useState(false);
+  const [megaEntering, setMegaEntering] = useState(false);
+  const [megaOriginX, setMegaOriginX] = useState<number | null>(null);
+  const megaRef = useRef<string | null>(null);
+  const megaTimerRef = useRef<number | null>(null);
+  const megaCardRef = useRef<HTMLDivElement>(null);
+  const navItemRefs = useRef(new Map<string, HTMLLIElement>());
+  const megaReducedMotion = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const clearMegaTimer = () => {
+    if (megaTimerRef.current !== null) {
+      window.clearTimeout(megaTimerRef.current);
+      megaTimerRef.current = null;
+    }
+  };
+  const killMega = () => {
+    clearMegaTimer();
+    megaRef.current = null;
+    setMega(null);
+    setMegaClosing(false);
+    setMegaEntering(false);
+  };
+  const closeMega = () => {
+    if (megaRef.current === null || megaTimerRef.current !== null) return;
+    if (megaReducedMotion()) {
+      killMega();
+      return;
+    }
+    setMegaClosing(true);
+    megaTimerRef.current = window.setTimeout(() => {
+      megaTimerRef.current = null;
+      megaRef.current = null;
+      setMega(null);
+      setMegaClosing(false);
+    }, 190);
+  };
+  const openMega = (id: string) => {
+    const fresh = megaRef.current === null;
+    clearMegaTimer();
+    setMegaClosing(false);
+    setMegaEntering(fresh && !megaReducedMotion());
+    megaRef.current = id;
+    setMega(id);
+  };
+  // Measure the origin whenever the shown category changes: the
+  // item's centre minus the card's layout left (offsetLeft is
+  // transform-free, so the card's own animation can't skew it).
+  useLayoutEffect(() => {
+    if (!mega) return;
+    const card = megaCardRef.current;
+    const item = navItemRefs.current.get(mega);
+    if (!card || !item) return;
+    const panelEl = card.offsetParent as HTMLElement | null;
+    if (!panelEl) return;
+    const itemRect = item.getBoundingClientRect();
+    const cardLeft = panelEl.getBoundingClientRect().left + card.offsetLeft;
+    setMegaOriginX(Math.round(itemRect.left + itemRect.width / 2 - cardLeft));
+  }, [mega]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -94,17 +161,19 @@ export default function Header({
       }
       if (e.key === "Escape") {
         setPanel("none");
-        setMega(null);
+        closeMega();
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // The mega panel and the click panels never stack: opening search
-  // or the menu shuts the hover panel.
+  // or the menu shuts the hover panel (instantly, as before).
   useEffect(() => {
-    if (panel !== "none") setMega(null);
+    if (panel !== "none") killMega();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel]);
 
   // Category pill scroll arrows: an arrow (over a soft shade of
@@ -194,7 +263,7 @@ export default function Header({
     <div className="hdr">
       {/* Main bar — leaving the bar (nav + any open panel together)
           shuts the hover mega panel. */}
-      <header className="hdr__bar" onMouseLeave={() => setMega(null)}>
+      <header className="hdr__bar" onMouseLeave={() => closeMega()}>
         <div className="hwrap hdr__bar-in">
           <button
             type="button"
@@ -218,7 +287,7 @@ export default function Header({
 
           <nav className="hdr__nav" aria-label="Categories">
             <ul ref={navListRef} className="hdr__nav-list no-scrollbar" onScroll={updateNavArrows}>
-              <li onMouseEnter={() => setMega(null)}>
+              <li onMouseEnter={() => closeMega()}>
                 <Link href="/shop" className="hdr__nav-link">
                   All Products
                 </Link>
@@ -228,9 +297,14 @@ export default function Header({
                 return (
                   <li
                     key={category._id}
+                    ref={(el) => {
+                      if (el) navItemRefs.current.set(String(category._id), el);
+                      else navItemRefs.current.delete(String(category._id));
+                    }}
                     onMouseEnter={() => {
                       if (panel === "none") {
-                        setMega(subs.length ? String(category._id) : null);
+                        if (subs.length) openMega(String(category._id));
+                        else closeMega();
                       }
                     }}
                   >
@@ -362,7 +436,18 @@ export default function Header({
             leaving the bar shuts it. */}
         {megaCategory && panel === "none" && (
           <div className="hdr__panel hdr__mega">
-            <div className="hdr__panel-card">
+            <div
+              ref={megaCardRef}
+              className={`hdr__panel-card${megaClosing ? " hdr__mega-card--out" : megaEntering ? " hdr__mega-card--in" : ""}`}
+              style={
+                megaOriginX !== null
+                  ? { transformOrigin: `${megaOriginX}px 0` }
+                  : undefined
+              }
+              onAnimationEnd={() => {
+                if (megaEntering) setMegaEntering(false);
+              }}
+            >
               <div className="hdr__mega-grid">
                 <div className="hdr__mega-intro">
                   <p className="hdr__mega-idx" aria-hidden>
@@ -375,7 +460,7 @@ export default function Header({
                   <Link
                     href={`/category/${megaCategory.slug}`}
                     className="hdr__mega-all"
-                    onClick={() => setMega(null)}
+                    onClick={() => closeMega()}
                   >
                     View All {megaCategory.name}
                     <IconArrow className="h-4 w-4" />
@@ -389,7 +474,7 @@ export default function Header({
                     <Link
                       key={sub._id}
                       href={`/category/${sub.slug}`}
-                      onClick={() => setMega(null)}
+                      onClick={() => closeMega()}
                     >
                       <span className="idx" aria-hidden>
                         {String(i + 1).padStart(2, "0")}
@@ -402,7 +487,7 @@ export default function Header({
                   <Link
                     href={`/product/${megaProduct.slug}`}
                     className="hdr__mega-feat"
-                    onClick={() => setMega(null)}
+                    onClick={() => closeMega()}
                   >
                     <span className="hdr__mega-feat-media">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
