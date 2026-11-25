@@ -32,14 +32,31 @@ function varsFor(colors: PaletteColors, light: boolean): string {
   ].join(";");
 }
 
-/** The <style> payload for the root layout: the active mode's
- *  variables on :root. For "system" mode the dark set is the default
- *  and the light set applies under the OS light preference — pure
- *  CSS, no client script, no flash. */
+/** The <style> payload for the root layout: BOTH modes' variable
+ *  sets, keyed off the <html> data-mode attribute — the visitor's
+ *  effective mode. That is the admin-kept mode by default, or the
+ *  visitor's own saved header-switch choice when they have one
+ *  (see themeBootScript). Token derivation stays in varsFor above,
+ *  so the admin palette and the light-mode #DBDBDB rule behave
+ *  identically whichever mode the attribute selects. */
 export function themeCss(appearance: StoreAppearance): string {
-  const active = varsFor(appearance.colors, appearance.mode === "light");
-  if (appearance.mode !== "system") return `:root{${active}}`;
-  return `:root{${varsFor(appearance.colorsDark, false)}}@media (prefers-color-scheme: light){:root{${varsFor(appearance.colorsLight, true)}}}`;
+  return (
+    `:root[data-mode="dark"]{${varsFor(appearance.colorsDark, false)}}` +
+    `:root[data-mode="light"]{${varsFor(appearance.colorsLight, true)}}`
+  );
+}
+
+/** The pre-paint boot script for the root layout <head>: resolves
+ *  the visitor's effective mode BEFORE first paint, in this order —
+ *  (1) their saved header-switch choice (localStorage "sf-mode"),
+ *  (2) the admin-kept mode, (3) admin "system" follows the OS via
+ *  prefers-color-scheme — and stamps it on <html data-mode>, which
+ *  is what themeCss keys off. The admin setting is never written
+ *  from the storefront; a saved choice lives only in this
+ *  visitor's browser and affects nobody else. */
+export function themeBootScript(appearance: StoreAppearance): string {
+  const admin = JSON.stringify(appearance.mode);
+  return `(function(){try{var m=localStorage.getItem("sf-mode");if(m!=="dark"&&m!=="light"){m=null}if(!m){var a=${admin};m=a==="system"?(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):a}document.documentElement.setAttribute("data-mode",m)}catch(e){}})();`;
 }
 
 /** The mode the page should declare: for "system" the dark set is

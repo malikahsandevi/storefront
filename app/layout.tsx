@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Motion from "@/components/Motion";
 import { ShopProvider } from "@/lib/store";
-import { themeCss, themeMode } from "@/lib/theme";
+import { themeBootScript, themeCss, themeMode } from "@/lib/theme";
 import {
   SITE_URL,
   fetchCategories,
@@ -92,16 +92,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-mode={themeMode(config.appearance)}
+      suppressHydrationWarning
       className={`h-full antialiased ${body.variable} ${display.variable}`}
     >
       <head>
+        {/* Pre-paint: the visitor's saved theme-switch choice (if
+            any) replaces the admin-kept default on <html data-mode>
+            before first paint — no flash, and the admin setting
+            itself is never touched (see lib/theme.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript(config.appearance) }} />
         {/* The admin-kept theme, as CSS variables (see lib/theme.ts). */}
         <style dangerouslySetInnerHTML={{ __html: themeCss(config.appearance) }} />
       </head>
       <body className="flex min-h-full flex-col bg-ink font-sans text-cream">
         <ShopProvider>
           <CartUIProvider>
-            <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} featured={featured} currency={config.currency} contactEmail={config.contactEmail} phone={config.phone} />
+            <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} featured={featured} currency={config.currency} contactEmail={config.contactEmail} phone={config.phone} defaultMode={themeMode(config.appearance)} />
             <main className="w-full flex-1">{children}</main>
             <Footer config={config} categories={categories} />
             <CartDrawer />

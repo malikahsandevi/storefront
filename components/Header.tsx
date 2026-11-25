@@ -6,7 +6,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
-import { IconArrow, IconBag, IconChevron, IconHeart, IconSearch, IconUser } from "./icons";
+import { IconArrow, IconBag, IconChevron, IconHeart, IconMoon, IconSearch, IconSun, IconUser } from "./icons";
 
 /**
  * The store's header: ONE sticky glass bar (76px) — wordmark
@@ -24,6 +24,7 @@ export default function Header({
   categories,
   featured,
   currency,
+  defaultMode,
 }: {
   storeName: string;
   logo: string;
@@ -35,10 +36,40 @@ export default function Header({
   currency: string;
   contactEmail: string;
   phone: string;
+  /** The admin-kept mode as the server resolved it — the theme
+   *  switch's starting point before any visitor choice applies. */
+  defaultMode: string;
 }) {
   const { cartCount, wishlist, user } = useShop();
   const { setOpen: setCartOpen } = useCartUI();
   const router = useRouter();
+
+  // Theme switch (dark/light): the admin-kept mode is the default
+  // every new visitor gets; this switch is the visitor's OWN choice
+  // — it flips <html data-mode> at once (the layout's token sets key
+  // off it) and saves to localStorage, where the layout's pre-paint
+  // boot script picks it up on later visits. It never writes back
+  // to the admin setting and the palette is untouched. State starts
+  // at the server-rendered default and syncs on mount to the
+  // effective attribute the boot script already stamped.
+  const [mode, setMode] = useState<"dark" | "light">(
+    defaultMode === "light" ? "light" : "dark",
+  );
+  useEffect(() => {
+    const m = document.documentElement.getAttribute("data-mode");
+    if (m === "dark" || m === "light") setMode(m);
+  }, []);
+  const toggleMode = () => {
+    const next = mode === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-mode", next);
+    try {
+      localStorage.setItem("sf-mode", next);
+    } catch {
+      /* storage unavailable (private mode etc.) — the flip still
+         applies for this visit, it just won't persist. */
+    }
+    setMode(next);
+  };
   const [term, setTerm] = useState("");
   const [panel, setPanel] = useState<"none" | "search" | "menu">("none");
   // The hover mega panel's category (desktop nav) — null when shut.
@@ -262,6 +293,14 @@ export default function Header({
             <Link href={user ? "/account" : "/login"} className="hdr__icon" aria-label={user ? "My account" : "Sign in"}>
               <IconUser />
             </Link>
+            <button
+              type="button"
+              className="hdr__icon"
+              aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              onClick={toggleMode}
+            >
+              {mode === "dark" ? <IconSun /> : <IconMoon />}
+            </button>
             <button type="button" className="hdr__icon" aria-label="Cart" onClick={() => setCartOpen(true)}>
               <IconBag />
               {cartCount > 0 && <span className="hdr__bubble">{cartCount}</span>}
@@ -411,6 +450,24 @@ export default function Header({
                     <IconArrow className="h-4 w-4 text-primary" />
                   </Link>
                 ))}
+                {/* The visitor's own theme switch, reachable on
+                    mobile too — same behaviour as the header icon:
+                    flips this device only, the menu stays open so
+                    the change is visible at once. */}
+                <button
+                  type="button"
+                  className="hdr__mobile-theme"
+                  aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  onClick={toggleMode}
+                >
+                  <span className="idx" aria-hidden>–</span>
+                  <span>{mode === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                  {mode === "dark" ? (
+                    <IconSun className="h-4 w-4 text-primary" />
+                  ) : (
+                    <IconMoon className="h-4 w-4 text-primary" />
+                  )}
+                </button>
               </nav>
             </div>
           </div>

@@ -64,6 +64,23 @@ export function IconHeart({ className }: P) {
   );
 }
 
+export function IconSun({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19" />
+    </svg>
+  );
+}
+
+export function IconMoon({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M20 13.6A8.2 8.2 0 1 1 10.4 4 6.6 6.6 0 0 0 20 13.6Z" />
+    </svg>
+  );
+}
+
 export function IconUser({ className }: P) {
   return (
     <svg {...base} className={className}>

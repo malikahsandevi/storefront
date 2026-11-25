@@ -2637,6 +2637,28 @@ a.tick__fact:hover {
 .hdr__mobile-links a.hdr__mobile-sublink:hover {
   color: var(--sf-text);
 }
+/* The mobile menu's theme-switch row: same grid and padding as the
+   link rows, on a <button> (it flips the mode instead of
+   navigating), so it sits in the list like any other row. */
+.hdr__mobile-links button.hdr__mobile-theme {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--sf-text);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+.hdr__mobile-links button.hdr__mobile-theme:hover {
+  background: color-mix(in srgb, var(--sf-text) 5%, transparent);
+}
 
 /* ── Header mega panel (hover, desktop) ──────────────────────────
    The reference store's dropdown composition inside the shared
