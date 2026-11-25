@@ -123,8 +123,12 @@ export default function Header({
      morph runs the card is absolutely positioned inside the panel
      with panel-relative rects (so page scroll can't skew them)
      and the grid keeps the frame's width, clipped by the card's
-     overflow — the content never reflows mid-morph; it fades in
-     as the box nears full size. `mega` stays set through the exit
+     overflow — the content never reflows mid-morph. While the
+     morph runs the card paints BORDERS ONLY (transparent fill,
+     no top gradient line, no shadow — globals.css) and the
+     content stays hidden; the filled card paints only once the
+     morph completes, so no colour is left on the category when
+     the shrink lands on it. `mega` stays set through the exit
      so the panel can animate before unmounting. All helpers touch
      only refs + setState, so the first-render closures captured
      by the global key handler stay valid. */
@@ -447,8 +451,11 @@ export default function Header({
   // rect (panel-relative, via the --morph class + these inline
   // styles; the transition attaches only once the card is primed,
   // exactly like the admin viewer). The grid keeps the frame's
-  // width so the content never reflows mid-morph — it fades in as
-  // the box nears full size on open, and out as it shrinks away.
+  // width so the content never reflows mid-morph, and it stays
+  // HIDDEN for the whole morph: during the animation only the
+  // card's borders show (the --morph paint in globals.css), and
+  // the filled card + content appear only once the morph
+  // completes and these inline styles drop.
   const megaMorphRect = megaMorph
     ? megaMorph.stage === "from"
       ? megaMorph.from
@@ -468,10 +475,12 @@ export default function Header({
   const megaMorphGridStyle: React.CSSProperties | undefined = megaMorph
     ? {
         width: megaMorph.frame.width,
-        opacity: megaMorph.stage === "to" && !megaMorph.closing ? 1 : 0,
-        transition: megaMorph.closing
-          ? "opacity 120ms ease"
-          : "opacity 180ms ease 110ms",
+        // Off from the morph's first frame (no fade-out — during
+        // the animation ONLY the borders show); the fade back in
+        // rides the grid's own CSS transition once this inline
+        // style drops at morph completion.
+        opacity: 0,
+        transition: "none",
       }
     : undefined;
 
