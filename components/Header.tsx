@@ -31,6 +31,22 @@ const MEGA_MORPH_EASING = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 const MEGA_MORPH_TRANSITION = `left ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, top ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, width ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, height ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, border-radius ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}`;
 /** The panel card's own corner radius (.hdr__panel-card). */
 const MEGA_CARD_RADIUS = 26;
+/** The resting card's fill, copied from .hdr__panel-card in
+    globals.css — painted inline while a morph runs, keyed to
+    the morph's stage ("to" = this fill, "from" = the clear twin
+    below), so the centre colours ramp in sync with the size
+    change in both directions. */
+const MEGA_CARD_BG =
+  "radial-gradient(900px 300px at 85% -20%, color-mix(in srgb, var(--sf-primary) 16%, transparent), transparent 60%), var(--sf-bg-2)";
+/** The same background with every stop transparent — the close
+    fade's target: matching layer structure, so the gradient
+    cross-fades instead of flipping. */
+const MEGA_CARD_BG_CLEAR =
+  "radial-gradient(900px 300px at 85% -20%, transparent, transparent 60%), transparent";
+const MEGA_CARD_SHADOW = "0 40px 90px -30px rgb(0 0 0 / 0.85)";
+const MEGA_CARD_BORDER = "var(--sf-line)";
+/** The borders-only frame colour (.hdr__mega-card--morph). */
+const MEGA_CARD_BORDER_ONLY = "color-mix(in srgb, var(--sf-text) 32%, transparent)";
 
 /**
  * The store's header: ONE sticky glass bar (76px) — wordmark
@@ -123,12 +139,15 @@ export default function Header({
      morph runs the card is absolutely positioned inside the panel
      with panel-relative rects (so page scroll can't skew them)
      and the grid keeps the frame's width, clipped by the card's
-     overflow — the content never reflows mid-morph. While the
-     morph runs the card paints BORDERS ONLY (transparent fill,
-     no top gradient line, no shadow — globals.css) and the
-     content stays hidden; the filled card paints only once the
-     morph completes, so no colour is left on the category when
-     the shrink lands on it. `mega` stays set through the exit
+     overflow — the content never reflows mid-morph. The centre
+     fill + content are keyed to the morph's own stage (below),
+     so their opacity RAMPS with the size change — 0 → 1 as the
+     box grows on open, 1 → 0 as it shrinks on close, same 300ms
+     + easing, one synced motion (Ahsan, 2026-11-26: "opacity
+     value bahry gi animation jisy complete hogi") — while the
+     border frame itself never fades, and at the end of the
+     shrink nothing but the frame lands on the category, so no
+     colour is left on it. `mega` stays set through the exit
      so the panel can animate before unmounting. All helpers touch
      only refs + setState, so the first-render closures captured
      by the global key handler stay valid. */
@@ -450,12 +469,16 @@ export default function Header({
   // While a morph runs, the card is placed by the morph's current
   // rect (panel-relative, via the --morph class + these inline
   // styles; the transition attaches only once the card is primed,
-  // exactly like the admin viewer). The grid keeps the frame's
-  // width so the content never reflows mid-morph, and it stays
-  // HIDDEN for the whole morph: during the animation only the
-  // card's borders show (the --morph paint in globals.css), and
-  // the filled card + content appear only once the morph
-  // completes and these inline styles drop.
+  // exactly like the admin viewer). The PAINT is keyed to the
+  // stage, so it rides the same transition as the geometry:
+  // stage "from" paints the clear twin (transparent fill, no
+  // shadow, the strengthened border colour) and stage "to" the
+  // resting card's fill — opening (from → to) the centre colours
+  // ramp 0 → 1 as the box grows, closing (to → from) they ramp
+  // 1 → 0 as it shrinks, reaching each end exactly when the size
+  // change completes. The grid's content opacity follows the
+  // same keying. The border frame never fades: both stages paint
+  // a fully visible border colour.
   const megaMorphRect = megaMorph
     ? megaMorph.stage === "from"
       ? megaMorph.from
@@ -469,18 +492,29 @@ export default function Header({
           width: megaMorphRect.width,
           height: megaMorphRect.height,
           borderRadius: megaMorphRect.radius,
-          transition: megaPrimed ? MEGA_MORPH_TRANSITION : undefined,
+          transition: megaPrimed
+            ? `${MEGA_MORPH_TRANSITION}, background ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, box-shadow ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, border-color ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}`
+            : undefined,
+          ...(megaMorph.stage === "to"
+            ? {
+                background: MEGA_CARD_BG,
+                boxShadow: MEGA_CARD_SHADOW,
+                borderColor: MEGA_CARD_BORDER,
+              }
+            : {
+                background: MEGA_CARD_BG_CLEAR,
+                boxShadow: "none",
+                borderColor: MEGA_CARD_BORDER_ONLY,
+              }),
         }
       : undefined;
   const megaMorphGridStyle: React.CSSProperties | undefined = megaMorph
     ? {
         width: megaMorph.frame.width,
-        // Off from the morph's first frame (no fade-out — during
-        // the animation ONLY the borders show); the fade back in
-        // rides the grid's own CSS transition once this inline
-        // style drops at morph completion.
-        opacity: 0,
-        transition: "none",
+        opacity: megaMorph.stage === "to" ? 1 : 0,
+        transition: megaPrimed
+          ? `opacity ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}`
+          : "none",
       }
     : undefined;
 
@@ -663,7 +697,7 @@ export default function Header({
           <div className="hdr__panel hdr__mega">
             <div
               ref={megaCardRef}
-              className={`hdr__panel-card${megaMorph ? " hdr__mega-card--morph" : ""}${megaMorph?.closing ? " hdr__mega-card--closing" : ""}`}
+              className={`hdr__panel-card${megaMorph ? " hdr__mega-card--morph" : ""}${megaMorph?.closing ? " hdr__mega-card--closing" : ""}${megaMorph?.stage === "to" ? " hdr__mega-card--paintin" : ""}`}
               style={megaMorphCardStyle}
             >
               <div className="hdr__mega-grid" style={megaMorphGridStyle}>

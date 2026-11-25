@@ -2856,10 +2856,10 @@ a.tick__fact:hover {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.25fr) 300px;
   align-items: stretch;
-  /* While a morph runs, Header.tsx holds the grid at opacity 0
-     inline (borders-only frame); when the morph completes the
-     inline style drops and this transition fades the content in. */
-  transition: opacity 160ms ease;
+  /* Content opacity is driven inline from Header.tsx while a
+     morph runs — it ramps WITH the size change (same 300ms +
+     easing), so no transition lives here: a class-level fade
+     would keep painting after the morph had completed. */
 }
 .hdr__mega-intro {
   display: flex;
@@ -2999,14 +2999,16 @@ a.tick__fact:hover {
    category visibly SIZE-CHANGES into the popup and shrinks back
    into the category on close. While a morph runs the card is
    absolutely positioned inside the panel by those inline rect
-   styles and paints BORDERS ONLY — the filled card's colour
-   swept across the animation and stayed on the category at the
-   end of the shrink (Ahsan, 2026-11-26). The earlier
-   scale(0.96)+fade grow was rejected — a full-size card merely
-   pulsing is not a size change. The wrapper's generic panelin
-   stays disabled for the mega so only the card moves. Reduced
-   motion is handled in JS (instant open/close), so no keyframes
-   live here. */
+   styles; its centre fill + content opacity RAMP with the size
+   change (keyed to the morph stage inline — 0 → 1 growing,
+   1 → 0 shrinking, one synced motion; Ahsan, 2026-11-26),
+   while the border frame stays fully visible throughout and
+   no colour is left on the category when the shrink lands on
+   it. The earlier scale(0.96)+fade grow was rejected — a
+   full-size card merely pulsing is not a size change. The
+   wrapper's generic panelin stays disabled for the mega so
+   only the card moves. Reduced motion is handled in JS
+   (instant open/close), so no keyframes live here. */
 .hdr__mega {
   animation: none;
 }
@@ -3015,18 +3017,26 @@ a.tick__fact:hover {
   margin: 0;
   max-width: none;
   z-index: 60;
-  /* Borders ONLY while the box size-changes (Ahsan, 2026-11-26):
-     no fill, no top gradient line, no shadow — just the frame
-     travelling between the item and the popup. The filled card
-     painted its colour across the sweep and dumped it on the
-     category as it shrank into it; the full fill + content paint
-     only once the morph completes and this class drops. */
+  /* The frame's resting paint while morphing: transparent fill,
+     no shadow, a strengthened border — Header.tsx overrides the
+     fill inline, keyed to the morph stage, so the centre
+     colours ramp WITH the size change (the values here are the
+     "from" end of that ramp and a fallback). The border colour
+     is fully visible at both ends of the ramp — the frame
+     itself never fades. */
   background: transparent;
   box-shadow: none;
   border-color: color-mix(in srgb, var(--sf-text) 32%, transparent);
 }
+/* The top gradient line ramps with the same synced motion:
+   transparent at the "from" stage, full at "to" (the --paintin
+   class, set from Header.tsx for exactly that stage). */
 .hdr__mega-card--morph::before {
-  display: none;
+  opacity: 0;
+  transition: opacity 300ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.hdr__mega-card--morph.hdr__mega-card--paintin::before {
+  opacity: 1;
 }
 /* While the card shrinks back into its item it must not steal
    the hit target from the item under the resting pointer —
