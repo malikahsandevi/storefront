@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiCall, formatMoney, type Quote, type ShippingOptionSet, type StoreConfig } from "@/lib/api";
+import { apiCall, formatMoney, type ShippingOptionSet, type StoreConfig } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { IconCheck } from "@/components/icons";
 
@@ -11,17 +11,13 @@ import { IconCheck } from "@/components/icons";
  * back link and display title, the free-shipping progress note
  * above the list (shown only when the store has configured a
  * method with a free-shipping threshold), plain item rows with
- * hairline dividers, and a summary block with the subtotal, the
- * tax note, the gradient checkout pill and the trust lines.
- * Coupon handling is the previous build's: the code is validated
- * against the server quote and re-validates when the cart changes.
+ * hairline dividers, and the "Your Cart Worth" panel — the
+ * carted items' own price calculation (quantity × unit price
+ * per line) and the total. Coupons are handled at checkout
+ * only; shipping is likewise computed at checkout.
  */
 export default function CartPage() {
-  const { cart, updateQty, removeLine, cartSubtotal, user } = useShop();
-  const [couponCode, setCouponCode] = useState("");
-  const [applied, setApplied] = useState<Quote | null>(null);
-  const [couponMsg, setCouponMsg] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { cart, updateQty, removeLine, cartSubtotal } = useShop();
   const [currency, setCurrency] = useState("USD");
   const [paymentNames, setPaymentNames] = useState<string[]>([]);
   const [shipping, setShipping] = useState<ShippingOptionSet | null>(null);
@@ -38,34 +34,6 @@ export default function CartPage() {
       .catch(() => {});
   }, []);
 
-  // The applied coupon re-validates whenever the cart changes.
-  useEffect(() => {
-    setApplied(null);
-    setCouponMsg("");
-  }, [cart]);
-
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) return;
-    setBusy(true);
-    setCouponMsg("");
-    try {
-      const quote = await apiCall<Quote>("POST", "/api/storefront/quote", {
-        items: cart.map((line) => ({ product: line.productId, quantity: line.quantity })),
-        couponCode: couponCode.trim(),
-        email: user?.email,
-      }, user?.token);
-      setApplied(quote);
-      setCouponMsg(`Coupon applied — you save ${formatMoney(quote.discount, currency)}.`);
-    } catch (error) {
-      setApplied(null);
-      setCouponMsg(error instanceof Error ? error.message : "That coupon could not be applied.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const discount = applied?.discount || 0;
-  const total = Math.max(0, cartSubtotal - discount);
   const freeMethod = shipping?.methods.find((m) => m.freeAbove && m.freeAbove > 0);
   const freeRemaining = freeMethod ? Math.max(0, (freeMethod.freeAbove || 0) - cartSubtotal) : 0;
   const freePct = freeMethod ? Math.min(100, (cartSubtotal / (freeMethod.freeAbove || 1)) * 100) : 0;
@@ -157,46 +125,31 @@ export default function CartPage() {
         </ul>
 
         <aside className="panel panel--pad lg:sticky lg:top-[120px]">
-          <h2 className="font-display text-[22px] font-normal text-cream">Order Summary</h2>
-          <form
-            className="mt-5 flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              applyCoupon();
-            }}
-          >
-            <input
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-              placeholder="Coupon code"
-              aria-label="Coupon code"
-              className="input min-w-0 flex-1"
-            />
-            <button type="submit" disabled={busy} className="btn btn--ghost btn--sm shrink-0 disabled:opacity-60">
-              {busy ? "…" : "Apply"}
-            </button>
-          </form>
-          {couponMsg && <p className="mt-2 text-xs text-muted" role="status">{couponMsg}</p>}
-          <dl className="ledger mt-6">
-            <div>
-              <dt>Subtotal</dt>
-              <dd>{formatMoney(cartSubtotal, currency)}</dd>
-            </div>
-            {discount > 0 && (
-              <div>
-                <dt>Coupon discount</dt>
-                <dd className="text-emerald-400">−{formatMoney(discount, currency)}</dd>
+          <h2 className="font-display text-[22px] font-normal text-cream">Your Cart Worth</h2>
+          <div className="mt-5 border-t border-line">
+            {cart.map((line) => (
+              <div
+                key={`${line.productId}-${line.variant || ""}`}
+                className="flex items-baseline justify-between gap-3 border-b border-line py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-cream">{line.name}</p>
+                  <p className="mt-0.5 text-xs text-muted">
+                    {line.quantity} × {formatMoney(line.price, currency)}
+                  </p>
+                </div>
+                <span className="shrink-0 font-display text-[15px] font-semibold text-cream">
+                  {formatMoney(line.price * line.quantity, currency)}
+                </span>
               </div>
-            )}
-            <div>
-              <dt>Shipping</dt>
-              <dd className="font-normal text-muted">Calculated at checkout</dd>
+            ))}
+            <div className="flex items-baseline justify-between pt-4">
+              <span className="font-display text-base font-medium text-cream">Total</span>
+              <span className="font-display text-xl font-semibold text-cream">
+                {formatMoney(cartSubtotal, currency)}
+              </span>
             </div>
-            <div className="total">
-              <dt>Estimated total</dt>
-              <dd>{formatMoney(total, currency)}</dd>
-            </div>
-          </dl>
+          </div>
           <Link href="/checkout" className="btn btn--primary btn--block mt-6">
             Proceed to Checkout
           </Link>
