@@ -21,7 +21,10 @@ import CustomSelect from "@/components/CustomSelect";
  * unchanged: config + shipping choices from the backend, the
  * profile prefill for signed-in customers, the debounced server
  * quote (totals always come from the server), and order placement
- * through the existing createOrder flow.
+ * through the existing createOrder flow. (Stripe round: when the
+ * shop's Stripe entry is configured and the Stripe method is picked,
+ * placement is followed by a redirect to Stripe's hosted page, and
+ * the ?payment= return landing re-reads the order's real status.)
  */
 export default function CheckoutPage() {
   const { cart, user, clearCart, ready } = useShop();
@@ -50,9 +53,19 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+  const [payError, setPayError] = useState("");
+  // Return landing from Stripe's hosted page (?payment=success|
+  // cancelled&orderId=…): the order's real state is re-read from the
+  // backend — this page never declares a payment "Paid" itself.
+  const [landing, setLanding] = useState<{ kind: "success" | "cancelled"; orderId: string; orderNumber: string } | null>(null);
+  const [landingOrder, setLandingOrder] = useState<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number } | null>(null);
+  const [landingDone, setLandingDone] = useState(false);
   const quoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currency = config?.currency || "USD";
+  // Online card payment is live only when the shop's Stripe entry is
+  // configured (the config flag) AND the shopper picked that method.
+  const stripeOnline = Boolean(config?.stripePayAvailable) && paymentMethod.trim().toLowerCase() === "stripe";
   const items = useMemo(
     () => cart.map((line) => ({ product: line.productId, quantity: line.quantity })),
     [cart],
@@ -70,6 +83,60 @@ export default function CheckoutPage() {
       })
       .catch(() => {});
   }, []);
+
+  // Stripe return landing: Stripe sends the browser back here with
+  // ?payment=success|cancelled&orderId=…&order=… after its hosted page.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    const orderId = params.get("orderId");
+    if ((payment === "success" || payment === "cancelled") && orderId) {
+      setLanding({ kind: payment, orderId, orderNumber: params.get("order") || "" });
+    }
+  }, []);
+
+  // Read the returned order's real state: signed-in customers via
+  // their account order view; guests via order tracking with the
+  // email stashed before the redirect. One delayed re-read on the
+  // success landing, because the webhook may land a moment later —
+  // the status shown is always the backend's, never a guess.
+  useEffect(() => {
+    if (!landing) return;
+    let stale = false;
+    const readStatus = async () => {
+      if (user) {
+        return apiCall<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number }>(
+          "GET", `/api/storefront/me/orders/${landing.orderId}`, undefined, user.token,
+        );
+      }
+      try {
+        const stash = JSON.parse(sessionStorage.getItem("stripe-return") || "null");
+        if (stash?.orderNumber && stash?.email) {
+          return await apiCall<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number }>(
+            "POST", "/api/storefront/track", { orderNumber: stash.orderNumber, email: stash.email },
+          );
+        }
+      } catch { /* fall through to the number-only panel */ }
+      return null;
+    };
+    (async () => {
+      let data: Awaited<ReturnType<typeof readStatus>> = null;
+      try { data = await readStatus(); } catch { data = null; }
+      if (stale) return;
+      if (data) setLandingOrder(data);
+      setLandingDone(true);
+      if (landing.kind === "success" && data && data.paymentStatus !== "paid") {
+        setTimeout(async () => {
+          if (stale) return;
+          try {
+            const again = await readStatus();
+            if (again && !stale) setLandingOrder(again);
+          } catch { /* keep the first read */ }
+        }, 3000);
+      }
+    })();
+    return () => { stale = true; };
+  }, [landing, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -126,6 +193,53 @@ export default function CheckoutPage() {
     }, 450);
   }, [items, city, methodId, optionId, couponCode, email, user]);
 
+  if (landing) {
+    const shownNumber = landingOrder?.orderNumber || landing.orderNumber;
+    const paid = landingOrder?.paymentStatus === "paid";
+    return (
+      <div className="wrap py-16">
+        <div className="mx-auto max-w-xl text-center">
+          <p aria-hidden className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-4xl text-primary ring-1 ring-primary/40">{landing.kind === "cancelled" ? "!" : "✓"}</p>
+          <h1 className="h1-page mt-6">
+            {landing.kind === "cancelled" ? "Payment not completed" : paid ? "Payment confirmed — thank you!" : "Order placed — thank you!"}
+          </h1>
+          {landing.kind === "cancelled" ? (
+            <p className="mt-4 text-muted">
+              Your payment was not completed{shownNumber ? <> for order <span className="font-bold text-cream">{shownNumber}</span></> : ""} — the order is placed but unpaid.
+            </p>
+          ) : (
+            <p className="mt-4 text-muted">
+              {shownNumber ? <>Your order number is <span className="font-bold text-cream">{shownNumber}</span>. </> : ""}
+              {paid ? "Your payment has been received." : "Your payment status is shown below, exactly as the store has it."}
+            </p>
+          )}
+          {landingOrder ? (
+            <dl className="panel mx-auto mt-7 max-w-sm space-y-2.5 px-6 py-6 text-left text-sm">
+              <div className="flex justify-between"><dt className="text-muted">Total</dt><dd className="font-bold text-cream">{formatMoney(landingOrder.total, currency)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{landingOrder.paymentMethod} ({landingOrder.paymentStatus})</dd></div>
+              <div className="flex justify-between"><dt className="text-muted">Status</dt><dd className="text-cream">{landingOrder.status}</dd></div>
+            </dl>
+          ) : (
+            <p className="mt-4 text-sm text-muted">{landingDone ? "Use order tracking to see the latest status of your order." : "Loading your order…"}</p>
+          )}
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link href="/track-order" className="btn btn--primary">
+              Track Order
+            </Link>
+            {user && (
+              <Link href="/account/orders" className="btn btn--ghost">
+                My Orders
+              </Link>
+            )}
+            <Link href="/shop" className="btn btn--ghost">
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (ready && cart.length === 0 && !placed) {
     return (
       <div className="wrap py-16 text-center">
@@ -153,6 +267,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{placed.paymentMethod} ({placed.paymentStatus})</dd></div>
             <div className="flex justify-between"><dt className="text-muted">Status</dt><dd className="text-cream">{placed.status}</dd></div>
           </dl>
+          {payError && <p className="mt-4 text-sm text-primary" role="alert">{payError}</p>}
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link href="/track-order" className="btn btn--primary">
               Track Order
@@ -187,6 +302,28 @@ export default function CheckoutPage() {
         shippingMethodId: methodId || undefined,
         deliveryOptionId: optionId || undefined,
       }, user?.token);
+      if (stripeOnline) {
+        // Stash what the return landing needs to re-read this order
+        // as a guest (order number + email for tracking).
+        try {
+          sessionStorage.setItem("stripe-return", JSON.stringify({
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            email: user?.email || email,
+          }));
+        } catch { /* the landing falls back to the order number alone */ }
+        try {
+          const session = await apiCall<{ url: string }>(
+            "POST", `/api/storefront/orders/${order._id}/stripe-session`, {}, user?.token,
+          );
+          clearCart();
+          window.location.href = session.url;
+          return;
+        } catch {
+          // The order IS placed; only the payment could not start.
+          setPayError("Online payment could not be started — your order is placed but unpaid.");
+        }
+      }
       setPlaced(order);
       clearCart();
     } catch (err) {
@@ -344,7 +481,9 @@ export default function CheckoutPage() {
               ))}
             </div>
             <p className="mt-3.5 text-xs text-muted-2">
-              Online payment methods are confirmed by the store after your order is placed; cash on delivery is paid when your order arrives.
+              {stripeOnline
+                ? "After placing your order you will be redirected to Stripe's secure payment page to pay by card."
+                : "Online payment methods are confirmed by the store after your order is placed; cash on delivery is paid when your order arrives."}
             </p>
           </section>
         </div>
@@ -392,7 +531,7 @@ export default function CheckoutPage() {
             disabled={placing || !quote}
             className="btn btn--primary btn--block mt-6 disabled:opacity-60"
           >
-            {placing ? "Placing order…" : "Place Order"}
+            {placing ? "Placing order…" : stripeOnline ? "Place Order & Pay" : "Place Order"}
           </button>
           <button type="button" onClick={() => router.push("/cart")} className="mt-3.5 w-full text-center text-sm text-muted transition hover:text-cream">
             Back to cart

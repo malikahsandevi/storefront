@@ -41,6 +41,9 @@ export interface StoreConfig {
   contactEmail: string;
   phone: string;
   paymentMethods: { name: string; description: string }[];
+  /** True when the shop's Stripe entry is active with a secret key —
+   *  the "Stripe" payment method then redirects to Stripe Checkout. */
+  stripePayAvailable: boolean;
   appearance: StoreAppearance;
 }
 
@@ -203,6 +206,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   contactEmail: "",
   phone: "",
   paymentMethods: [],
+  stripePayAvailable: false,
   appearance: FALLBACK_APPEARANCE,
 };
 
