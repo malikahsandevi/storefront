@@ -260,7 +260,7 @@ export default async function HomePage() {
                   Shop by <strong>category.</strong>
                 </>
               }
-              lead="Every category in the store, with its live product count."
+              lead="Every category in the store."
               id="categories-heading"
               href="/shop"
               split
@@ -275,10 +275,6 @@ export default async function HomePage() {
                     </span>
                   )}
                   <span className="tile__body">
-                    <span className="tile__badge">
-                      {category.productsCount}{" "}
-                      {category.productsCount === 1 ? "product" : "products"}
-                    </span>
                     <span className="tile__name">{category.name}</span>
                     {category.description && <span className="tile__text">{category.description}</span>}
                     <span className="tile__foot">

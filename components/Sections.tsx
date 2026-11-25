@@ -32,8 +32,8 @@ export function FactsTicker({
   facts: string[];
 }) {
   const tops = categories.filter((c) => !c.parent);
-  const lane = (items: React.ReactNode[], key: string) => (
-    <div className="tick__lane" key={key}>
+  const lane = (items: React.ReactNode[], key: string, rev = false) => (
+    <div className={`tick__lane${rev ? " tick__lane--rev" : ""}`} key={key}>
       {[0, 1].map((copy) => (
         <div className="tick__track" key={copy} aria-hidden={copy === 1}>
           {items}
@@ -51,7 +51,7 @@ export function FactsTicker({
           {lane(
             tops.map((c) => (
               <Link key={c._id} href={`/category/${c.slug}`} className="tick__fact">
-                {c.name} · {c.productsCount}
+                {c.name}
               </Link>
             )),
             "cats",
@@ -69,6 +69,7 @@ export function FactsTicker({
             </span>
           )),
           "facts",
+          true,
         )}
       </div>
     </div>

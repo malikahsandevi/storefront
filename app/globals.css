@@ -901,6 +901,9 @@ select.input {
 .tick__lane:hover .tick__track {
   animation-play-state: paused;
 }
+.tick__lane--rev .tick__track {
+  animation-direction: reverse;
+}
 @keyframes marquee {
   to { transform: translateX(-100%); }
 }
