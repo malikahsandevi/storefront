@@ -128,6 +128,8 @@ export interface PlacedOrder {
   subtotal: number;
   discount: number;
   shippingCost: number;
+  shippingMethodName?: string;
+  deliveryOptionName?: string;
   total: number;
   items: { name: string; price: number; quantity: number; image: string }[];
   createdAt: string;
@@ -179,6 +181,8 @@ export interface MyOrder {
   subtotal: number;
   discount: number;
   shippingCost: number;
+  shippingMethodName?: string;
+  deliveryOptionName?: string;
   total: number;
   shippingAddress: CustomerAddress | null;
   createdAt: string;

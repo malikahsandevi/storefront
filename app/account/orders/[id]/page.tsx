@@ -86,6 +86,12 @@ export default function MyOrderDetailPage() {
             <dt>Shipping</dt>
             <dd>{order.shippingCost === 0 ? "Free" : formatMoney(order.shippingCost, currency)}</dd>
           </div>
+          {order.shippingMethodName && (
+            <div>
+              <dt>Delivery</dt>
+              <dd>{order.shippingMethodName}{order.deliveryOptionName ? ` · ${order.deliveryOptionName}` : ""}</dd>
+            </div>
+          )}
           <div>
             <dt>Payment</dt>
             <dd>{order.paymentMethod} — {order.paymentStatus}</dd>
