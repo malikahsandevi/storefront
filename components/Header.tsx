@@ -8,6 +8,30 @@ import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
 import { IconArrow, IconBag, IconCaretDown, IconChevron, IconHeart, IconMoon, IconSearch, IconSun, IconUser } from "./icons";
 
+/* Mega panel morph geometry — the admin AvatarViewer's FLIP
+   timing, shared by the open/close morphs below: the card's own
+   box (left/top/width/height/border-radius) transitions between
+   the pill item's rect and the card's natural frame rect. */
+interface MegaRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  radius: number;
+}
+interface MegaMorph {
+  from: MegaRect;
+  frame: MegaRect;
+  /** "from" renders the card at the item box; "to" at the frame. */
+  stage: "from" | "to";
+  closing: boolean;
+}
+const MEGA_MORPH_MS = 300;
+const MEGA_MORPH_EASING = "cubic-bezier(0.22, 0.61, 0.36, 1)";
+const MEGA_MORPH_TRANSITION = `left ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, top ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, width ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, height ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}, border-radius ${MEGA_MORPH_MS}ms ${MEGA_MORPH_EASING}`;
+/** The panel card's own corner radius (.hdr__panel-card). */
+const MEGA_CARD_RADIUS = 26;
+
 /**
  * The store's header: ONE sticky glass bar (76px) — wordmark
  * left, the category navigation inside a PILL that grows to fill
@@ -86,17 +110,34 @@ export default function Header({
     : -1;
   const megaProduct = megaCategory ? featured[String(megaCategory._id)] : undefined;
 
-  /* Mega panel open/close ANIMATION (Ahsan, 2026-11-25 23:59): the
-     popup grows out of the pill item that opened it and shrinks back
-     into it. `mega` stays set through the short exit so the panel
-     can animate before unmounting; the transform origin is the
-     opening item's centre measured against the panel card's box.
-     All helpers touch only refs + setState, so the first-render
-     closures captured by the global key handler stay valid. */
-  const [megaClosing, setMegaClosing] = useState(false);
-  const [megaEntering, setMegaEntering] = useState(false);
-  const [megaOriginX, setMegaOriginX] = useState<number | null>(null);
+  /* Mega panel open/close ANIMATION — the admin AvatarViewer's
+     FLIP morph (Ahsan, 2026-11-26: "category se sub popup tak
+     size change show — wo animation lagao"). The scale/fade grow
+     shipped first was rejected: like the admin's customer profile
+     image growing into its viewer card, the popup's CARD ITSELF
+     changes size — its box is measured at the pill item it came
+     from and at its own natural frame, and left/top/width/
+     height/border-radius transition between the two rects (the
+     viewer's exact 300ms + easing). Closing re-measures the item
+     and shrinks the card back into it before unmounting. While a
+     morph runs the card is absolutely positioned inside the panel
+     with panel-relative rects (so page scroll can't skew them)
+     and the grid keeps the frame's width, clipped by the card's
+     overflow — the content never reflows mid-morph; it fades in
+     as the box nears full size. `mega` stays set through the exit
+     so the panel can animate before unmounting. All helpers touch
+     only refs + setState, so the first-render closures captured
+     by the global key handler stay valid. */
+  const [megaMorph, setMegaMorph] = useState<MegaMorph | null>(null);
+  /** False only for a morph's first render (placed, not yet morphing). */
+  const [megaPrimed, setMegaPrimed] = useState(false);
   const megaRef = useRef<string | null>(null);
+  const megaMorphRef = useRef<MegaMorph | null>(null);
+  const megaClosingRef = useRef(false);
+  /** Category whose open morph starts once its panel has rendered. */
+  const megaPendingRef = useRef<string | null>(null);
+  /** Bumped on every open/close/kill so stale rAFs + timers bail. */
+  const megaSessionRef = useRef(0);
   const megaTimerRef = useRef<number | null>(null);
   const megaCardRef = useRef<HTMLDivElement>(null);
   const navItemRefs = useRef(new Map<string, HTMLLIElement>());
@@ -109,48 +150,191 @@ export default function Header({
       megaTimerRef.current = null;
     }
   };
+  const setMorph = (m: MegaMorph | null) => {
+    megaMorphRef.current = m;
+    setMegaMorph(m);
+  };
+  const flipMorph = (stage: "from" | "to") => {
+    const m = megaMorphRef.current;
+    if (m) setMorph({ ...m, stage });
+  };
+  /** The pill item's box (the link is the visual pill), viewport coords. */
+  const megaItemRect = (id: string): MegaRect | null => {
+    const li = navItemRefs.current.get(id);
+    if (!li) return null;
+    const el = (li.querySelector("a") as HTMLElement | null) ?? li;
+    const r = el.getBoundingClientRect();
+    return {
+      left: r.left,
+      top: r.top,
+      width: r.width,
+      height: r.height,
+      radius: r.height / 2,
+    };
+  };
+  /** A viewport rect → panel-relative (the morph's coordinate space). */
+  const megaRel = (panel: HTMLElement, r: MegaRect): MegaRect => {
+    const p = panel.getBoundingClientRect();
+    return { ...r, left: r.left - p.left, top: r.top - p.top };
+  };
   const killMega = () => {
+    megaSessionRef.current += 1;
     clearMegaTimer();
     megaRef.current = null;
+    megaClosingRef.current = false;
+    megaPendingRef.current = null;
+    setMorph(null);
+    setMegaPrimed(false);
     setMega(null);
-    setMegaClosing(false);
-    setMegaEntering(false);
+  };
+  const finishMegaClose = () => {
+    megaTimerRef.current = null;
+    megaRef.current = null;
+    megaClosingRef.current = false;
+    setMorph(null);
+    setMegaPrimed(false);
+    setMega(null);
   };
   const closeMega = () => {
-    if (megaRef.current === null || megaTimerRef.current !== null) return;
+    if (megaRef.current === null || megaClosingRef.current) return;
     if (megaReducedMotion()) {
       killMega();
       return;
     }
-    setMegaClosing(true);
-    megaTimerRef.current = window.setTimeout(() => {
-      megaTimerRef.current = null;
-      megaRef.current = null;
-      setMega(null);
-      setMegaClosing(false);
-    }, 190);
+    const session = (megaSessionRef.current += 1);
+    clearMegaTimer();
+    megaClosingRef.current = true;
+    const card = megaCardRef.current;
+    const itemRect = megaItemRect(megaRef.current);
+    const panelEl = card?.offsetParent as HTMLElement | null | undefined;
+    if (!card || !itemRect || !panelEl) {
+      finishMegaClose();
+      return;
+    }
+    const current = megaMorphRef.current;
+    if (current) {
+      // Mid-open morph: redirect it — re-measure the item (it may
+      // have moved) and shrink from wherever the card is now.
+      setMorph({
+        ...current,
+        from: megaRel(panelEl, itemRect),
+        closing: true,
+        stage: "from",
+      });
+      megaTimerRef.current = window.setTimeout(
+        finishMegaClose,
+        MEGA_MORPH_MS + 40,
+      );
+      return;
+    }
+    // Steady state: place the card at its natural box first (no
+    // transition), then flip the stage so it shrinks into the item.
+    const cr = card.getBoundingClientRect();
+    const frame = megaRel(panelEl, {
+      left: cr.left,
+      top: cr.top,
+      width: cr.width,
+      height: cr.height,
+      radius: MEGA_CARD_RADIUS,
+    });
+    setMegaPrimed(false);
+    setMorph({ from: megaRel(panelEl, itemRect), frame, stage: "to", closing: true });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (megaSessionRef.current !== session) return;
+        setMegaPrimed(true);
+        flipMorph("from");
+        megaTimerRef.current = window.setTimeout(
+          finishMegaClose,
+          MEGA_MORPH_MS + 40,
+        );
+      });
+    });
+  };
+  /* Start an open morph for the rendered panel: measure the item
+     box and the card's natural frame, place the card at the item,
+     then flip the stage two frames later so the transition runs
+     it into the frame (the AvatarViewer's exact sequence). A
+     morph already in flight (re-hover mid-close) instead resumes
+     from the card's current rendered box into its stored frame. */
+  const startOpenMorph = (id: string) => {
+    const card = megaCardRef.current;
+    const itemRect = megaItemRect(id);
+    const panelEl = card?.offsetParent as HTMLElement | null | undefined;
+    if (!card || !itemRect || !panelEl) return;
+    const current = megaMorphRef.current;
+    let from: MegaRect;
+    let frame: MegaRect;
+    const cr = card.getBoundingClientRect();
+    if (current) {
+      from = megaRel(panelEl, {
+        left: cr.left,
+        top: cr.top,
+        width: cr.width,
+        height: cr.height,
+        radius: MEGA_CARD_RADIUS,
+      });
+      frame = current.frame;
+    } else {
+      frame = megaRel(panelEl, {
+        left: cr.left,
+        top: cr.top,
+        width: cr.width,
+        height: cr.height,
+        radius: MEGA_CARD_RADIUS,
+      });
+      from = megaRel(panelEl, itemRect);
+    }
+    const session = megaSessionRef.current;
+    setMegaPrimed(false);
+    setMorph({ from, frame, stage: "from", closing: false });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (megaSessionRef.current !== session) return;
+        setMegaPrimed(true);
+        flipMorph("to");
+        megaTimerRef.current = window.setTimeout(() => {
+          megaTimerRef.current = null;
+          if (megaSessionRef.current !== session) return;
+          setMorph(null);
+          setMegaPrimed(false);
+        }, MEGA_MORPH_MS + 40);
+      });
+    });
   };
   const openMega = (id: string) => {
-    const fresh = megaRef.current === null;
+    // Re-entrant enter for the item already open/opening: while
+    // the card morphs, it sweeps over the resting pointer, the
+    // hit target churns off and back onto the item, and the
+    // browser refires mouseenter — a true no-op here, so the
+    // refire can't cancel the running morph's completion timer.
+    if (megaRef.current === id && !megaClosingRef.current) return;
+    megaSessionRef.current += 1;
     clearMegaTimer();
-    setMegaClosing(false);
-    setMegaEntering(fresh && !megaReducedMotion());
+    const fresh = megaRef.current === null;
+    const rescue = megaClosingRef.current;
+    const sameItem = megaRef.current === id;
+    megaClosingRef.current = false;
     megaRef.current = id;
+    if ((fresh || rescue) && !megaReducedMotion()) {
+      // A fresh open morphs once the panel renders (layout effect
+      // below); a re-hover of the SAME item mid-close finds the
+      // panel already rendered with its category unchanged, so no
+      // render is coming — resume the morph right here.
+      if (rescue && sameItem) startOpenMorph(id);
+      else megaPendingRef.current = id;
+    } else {
+      megaPendingRef.current = null;
+    }
     setMega(id);
   };
-  // Measure the origin whenever the shown category changes: the
-  // item's centre minus the card's layout left (offsetLeft is
-  // transform-free, so the card's own animation can't skew it).
+  // Fresh opens (and category changes mid-rescue) start their
+  // morph here, once the panel for the new category has rendered.
   useLayoutEffect(() => {
-    if (!mega) return;
-    const card = megaCardRef.current;
-    const item = navItemRefs.current.get(mega);
-    if (!card || !item) return;
-    const panelEl = card.offsetParent as HTMLElement | null;
-    if (!panelEl) return;
-    const itemRect = item.getBoundingClientRect();
-    const cardLeft = panelEl.getBoundingClientRect().left + card.offsetLeft;
-    setMegaOriginX(Math.round(itemRect.left + itemRect.width / 2 - cardLeft));
+    if (!mega || megaPendingRef.current !== mega) return;
+    megaPendingRef.current = null;
+    startOpenMorph(mega);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mega]);
 
   useEffect(() => {
@@ -258,6 +442,38 @@ export default function Header({
       ...tailLinks.map((link) => main(link.href, link.label)),
     ];
   })();
+
+  // While a morph runs, the card is placed by the morph's current
+  // rect (panel-relative, via the --morph class + these inline
+  // styles; the transition attaches only once the card is primed,
+  // exactly like the admin viewer). The grid keeps the frame's
+  // width so the content never reflows mid-morph — it fades in as
+  // the box nears full size on open, and out as it shrinks away.
+  const megaMorphRect = megaMorph
+    ? megaMorph.stage === "from"
+      ? megaMorph.from
+      : megaMorph.frame
+    : null;
+  const megaMorphCardStyle: React.CSSProperties | undefined =
+    megaMorph && megaMorphRect
+      ? {
+          left: megaMorphRect.left,
+          top: megaMorphRect.top,
+          width: megaMorphRect.width,
+          height: megaMorphRect.height,
+          borderRadius: megaMorphRect.radius,
+          transition: megaPrimed ? MEGA_MORPH_TRANSITION : undefined,
+        }
+      : undefined;
+  const megaMorphGridStyle: React.CSSProperties | undefined = megaMorph
+    ? {
+        width: megaMorph.frame.width,
+        opacity: megaMorph.stage === "to" && !megaMorph.closing ? 1 : 0,
+        transition: megaMorph.closing
+          ? "opacity 120ms ease"
+          : "opacity 180ms ease 110ms",
+      }
+    : undefined;
 
   return (
     <div className="hdr">
@@ -438,17 +654,10 @@ export default function Header({
           <div className="hdr__panel hdr__mega">
             <div
               ref={megaCardRef}
-              className={`hdr__panel-card${megaClosing ? " hdr__mega-card--out" : megaEntering ? " hdr__mega-card--in" : ""}`}
-              style={
-                megaOriginX !== null
-                  ? { transformOrigin: `${megaOriginX}px 0` }
-                  : undefined
-              }
-              onAnimationEnd={() => {
-                if (megaEntering) setMegaEntering(false);
-              }}
+              className={`hdr__panel-card${megaMorph ? " hdr__mega-card--morph" : ""}${megaMorph?.closing ? " hdr__mega-card--closing" : ""}`}
+              style={megaMorphCardStyle}
             >
-              <div className="hdr__mega-grid">
+              <div className="hdr__mega-grid" style={megaMorphGridStyle}>
                 <div className="hdr__mega-intro">
                   <p className="hdr__mega-idx" aria-hidden>
                     {String(megaIndex + 1).padStart(2, "0")}

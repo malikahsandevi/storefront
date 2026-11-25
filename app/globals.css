@@ -2977,46 +2977,34 @@ a.tick__fact:hover {
   font-size: 15px;
   color: var(--sf-muted);
 }
-/* Mega panel grow/shrink (Ahsan, 2026-11-25 23:59): the card
-   opens by growing out of the pill item that opened it — its
-   transform-origin is set inline from that item's measured
-   centre — and on close it shrinks back into the same item
-   before unmounting. The wrapper's generic panelin is disabled
-   for the mega so only the card moves. */
+/* Mega panel morph (Ahsan, 2026-11-26): the admin AvatarViewer
+   FLIP — the card's own box is measured at the pill item it came
+   from and at its natural frame, and left/top/width/height/
+   border-radius transition between the two rects (300ms, the
+   viewer's easing, driven inline from Header.tsx), so the
+   category visibly SIZE-CHANGES into the popup and shrinks back
+   into the category on close. While a morph runs the card is
+   absolutely positioned inside the panel by those inline rect
+   styles. The earlier scale(0.96)+fade grow was rejected — a
+   full-size card merely pulsing is not a size change. The
+   wrapper's generic panelin stays disabled for the mega so only
+   the card moves. Reduced motion is handled in JS (instant
+   open/close), so no keyframes live here. */
 .hdr__mega {
   animation: none;
 }
-@keyframes mega-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.hdr__mega-card--morph {
+  position: absolute;
+  margin: 0;
+  max-width: none;
+  z-index: 60;
 }
-@keyframes mega-out {
-  from {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.96) translateY(-6px);
-  }
-}
-.hdr__mega-card--in {
-  animation: mega-in 0.22s ease-out;
-}
-.hdr__mega-card--out {
-  animation: mega-out 0.18s ease-in forwards;
-}
-@media (prefers-reduced-motion: reduce) {
-  .hdr__mega-card--in,
-  .hdr__mega-card--out {
-    animation: none;
-  }
+/* While the card shrinks back into its item it must not steal
+   the hit target from the item under the resting pointer —
+   otherwise the sweep churns mouseenter and the panel reopens
+   the moment it unmounts (an Escape close would never stick). */
+.hdr__mega-card--closing {
+  pointer-events: none;
 }
 @media (max-width: 1199px) {
   .hdr__mega {
