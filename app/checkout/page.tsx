@@ -292,9 +292,13 @@ export default function CheckoutPage() {
     setError("");
     try {
       const order = await apiCall<PlacedOrder>("POST", "/api/storefront/orders", {
-        ...(user
-          ? {}
-          : { customer: { firstName, lastName, email, phone } }),
+        // The contact block ALWAYS goes with the order, signed in or
+        // not: the backend trusts a valid session token and ignores
+        // the block, but if it no longer accepts the browser's saved
+        // session (expired, secret rotated, account changed) it falls
+        // back to these details — without them it would refuse a
+        // visibly filled form with "name and email are required".
+        customer: { firstName, lastName, email, phone },
         shippingAddress: { street, city, state, zipCode, country },
         items,
         paymentMethod,
