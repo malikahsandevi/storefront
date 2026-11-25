@@ -1,52 +1,62 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { IconArrow } from "./icons";
 
 /**
- * The hodl section signature: a numbered mono kicker (accent index +
- * muted label + a 32px gradient bar that fades out), then the large
- * display H2, with an optional "View all →" link on the right.
- * Numbering is sequential per page and passed in by the caller.
+ * The reference store's section signature: a numbered mono kicker
+ * (accent index + muted label + a 32px gradient bar that fades
+ * out), then the large display H2 at regular weight — the emphasised
+ * words inside carry the accent gradient (pass them as <strong>).
+ * `split` puts a ghost "View all" pill at the right, `center`
+ * centres the block, exactly like the reference's head variants.
  */
 export default function SectionHead({
   no,
+  label,
   title,
+  lead,
   id,
   href,
+  hrefLabel = "View all",
+  center = false,
+  split = false,
 }: {
   no: string;
-  title: string;
+  label: string;
+  title: ReactNode;
+  lead?: string;
   id?: string;
   href?: string;
+  hrefLabel?: string;
+  center?: boolean;
+  split?: boolean;
 }) {
-  // hodl treatment: the H2 is set large in the display font at
-  // REGULAR weight, sentence case, tight −0.02em tracking, with the
-  // final word carrying the accent gradient (their signature move).
-  const words = title.trim().split(/\s+/);
-  const head = words.length > 1 ? words.slice(0, -1).join(" ") + " " : "";
-  const tail = words[words.length - 1];
-  return (
-    <div data-reveal className="mb-10">
-      <div className="flex items-center gap-3">
-        <span aria-hidden className="mono-label text-primary">{no}</span>
-        <span aria-hidden className="mono-label text-muted-2">{title}</span>
-        <span aria-hidden className="kicker-bar" />
-      </div>
-      <div className="mt-4 flex items-end justify-between gap-4">
-        <h2
-          id={id}
-          className="font-display text-[clamp(2.125rem,4.4vw,3.875rem)] font-normal leading-[1.04] tracking-[-0.02em] text-cream [text-wrap:balance]"
-        >
-          {head}
-          <span className="grad-text">{tail}</span>
-        </h2>
+  const head = (
+    <div>
+      <p className="kicker">
+        <span className="kicker__idx" aria-hidden>{no}</span>
+        <span>{label}</span>
+        <span className="kicker__bar" aria-hidden />
+      </p>
+      <h2 id={id} className="h2">{title}</h2>
+      {lead && <p className="lead">{lead}</p>}
+    </div>
+  );
+  if (split) {
+    return (
+      <div data-reveal className="head head--split">
+        {head}
         {href && (
-          <Link
-            href={href}
-            className="btn-ghost-pill mb-1 shrink-0 px-5 py-2.5 font-display text-[13px] font-semibold uppercase tracking-[0.08em] text-cream"
-          >
-            View all →
+          <Link href={href} className="btn btn--ghost btn--sm mb-1 shrink-0">
+            {hrefLabel} <IconArrow className="arr h-4 w-4" />
           </Link>
         )}
       </div>
+    );
+  }
+  return (
+    <div data-reveal className={`head${center ? " head--center" : ""}`}>
+      {head}
     </div>
   );
 }

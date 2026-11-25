@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Archivo, Inter } from "next/font/google";
+import { Nunito_Sans, Outfit } from "next/font/google";
 import "./globals.css";
+import CartDrawer, { CartUIProvider } from "@/components/CartDrawer";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Motion from "@/components/Motion";
@@ -49,11 +50,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const archivo = Archivo({
+const body = Nunito_Sans({
   subsets: ["latin"],
-  variable: "--font-archivo",
-  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-body",
+  weight: ["400", "600", "700", "800"],
+  display: "swap",
+});
+const display = Outfit({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -64,7 +70,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-mode={themeMode(config.appearance)}
-      className={`h-full antialiased ${inter.variable} ${archivo.variable}`}
+      className={`h-full antialiased ${body.variable} ${display.variable}`}
     >
       <head>
         {/* The admin-kept theme, as CSS variables (see lib/theme.ts). */}
@@ -72,9 +78,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col bg-ink font-sans text-cream">
         <ShopProvider>
-          <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} contactEmail={config.contactEmail} phone={config.phone} />
-          <main className="wrap-x w-full flex-1">{children}</main>
-          <Footer config={config} categories={categories} />
+          <CartUIProvider>
+            <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} contactEmail={config.contactEmail} phone={config.phone} />
+            <main className="w-full flex-1">{children}</main>
+            <Footer config={config} categories={categories} />
+            <CartDrawer />
+          </CartUIProvider>
         </ShopProvider>
         <Motion />
       </body>

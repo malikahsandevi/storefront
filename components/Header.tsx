@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CatalogCategory } from "@/lib/api";
 import { useShop } from "@/lib/store";
+import { useCartUI } from "./CartDrawer";
+import { IconArrow, IconBag, IconBox, IconHeart, IconMail, IconPhone, IconSearch, IconUser } from "./icons";
 
 /**
- * The hodl header: a 34px status rail (store line left, contact
- * right, gradient hairline under it) over ONE sticky glass bar —
- * logo left, category nav as 13px uppercase heading-font links,
- * icon actions right. Search opens as a hairline row under the bar;
- * on small screens the categories ride a second scrollable row.
- * All destinations and the search submit are the store's own.
+ * The reference store's header, rebuilt with our data:
+ *  - a 34px status rail (pulsing dot + store line left, contact
+ *    right, gradient hairline under it) that scrolls away;
+ *  - ONE sticky glass bar (76px): wordmark left, the category
+ *    navigation inside a centred PILL, and on the right a search
+ *    pill (with the ⌘K chip), a gradient CTA, and circular icon
+ *    actions with count bubbles. The cart icon opens the cart
+ *    drawer; search opens a glass panel under the bar; on small
+ *    screens a burger opens the numbered link panel.
+ * All destinations, the search submit and the badges are the
+ * store's own wiring. ALL top-level categories stay in the nav.
  */
 export default function Header({
   storeName,
@@ -30,132 +37,163 @@ export default function Header({
   phone: string;
 }) {
   const { cartCount, wishlist, user } = useShop();
+  const { setOpen: setCartOpen } = useCartUI();
   const router = useRouter();
   const [term, setTerm] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  // ALL top-level categories stay linked in the global navigation —
-  // the old header linked every one; none may drop out of reach.
+  const [panel, setPanel] = useState<"none" | "search" | "menu">("none");
   const topCategories = categories.filter((c) => !c.parent);
 
-  const iconBtn =
-    "relative flex h-10 w-10 items-center justify-center text-muted transition hover:text-primary";
-  const badge =
-    "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white";
-  const navLink =
-    "flex h-10 items-center whitespace-nowrap px-2.5 font-display text-[13px] font-medium uppercase tracking-[0.09em] text-cream/75 transition hover:text-cream";
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPanel((p) => (p === "search" ? "none" : "search"));
+      }
+      if (e.key === "Escape") setPanel("none");
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setPanel("none");
     router.push(term.trim() ? `/shop?q=${encodeURIComponent(term.trim())}` : "/shop");
   };
 
+  const nameParts = storeName.trim().split(/\s+/);
+  const wordmark =
+    nameParts.length > 1 ? (
+      <>
+        {nameParts.slice(0, -1).join(" ")}{" "}
+        <span className="grad-text">{nameParts[nameParts.length - 1]}</span>
+      </>
+    ) : (
+      storeName
+    );
+
+  const menuLinks: { href: string; label: string }[] = [
+    { href: "/shop", label: "All Products" },
+    ...topCategories.map((c) => ({ href: `/category/${c.slug}`, label: c.name })),
+    { href: "/track-order", label: "Track Order" },
+    { href: "/wishlist", label: "Wishlist" },
+    { href: user ? "/account" : "/login", label: user ? "My Account" : "Sign In" },
+  ];
+
   return (
-    <>
+    <div className="hdr">
       {/* Status rail */}
-      <div className="relative hidden border-b border-line bg-ink md:block">
-        <div className="wrap-x flex h-[34px] items-center justify-between gap-6 text-[12.5px] tracking-[0.02em] text-muted">
-          <p className="truncate">{tagline || storeName}</p>
-          <p className="flex shrink-0 items-center gap-5">
+      <div className="hdr__rail">
+        <div className="hwrap hdr__rail-in">
+          <p className="hdr__rail-status">
+            <span className="dot" aria-hidden />
+            <span>{tagline || storeName}</span>
+          </p>
+          <p className="hdr__rail-contact">
+            <Link href="/track-order">
+              <IconBox /> Track Order
+            </Link>
             {contactEmail && (
-              <a href={`mailto:${contactEmail}`} className="transition hover:text-primary">
-                {contactEmail}
+              <a href={`mailto:${contactEmail}`}>
+                <IconMail /> {contactEmail}
               </a>
             )}
             {phone && (
-              <a href={`tel:${phone.replace(/\s+/g, "")}`} className="transition hover:text-primary">
-                {phone}
+              <a href={`tel:${phone.replace(/\s+/g, "")}`}>
+                <IconPhone /> {phone}
               </a>
             )}
           </p>
         </div>
-        <span
-          aria-hidden
-          className="absolute inset-x-0 bottom-[-1px] h-px opacity-70 bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--sf-primary)_55%,transparent),color-mix(in_srgb,var(--sf-secondary)_40%,transparent),transparent)]"
-        />
       </div>
 
-      <header className="sticky top-0 z-40">
-        <div className="border-b border-line bg-[color-mix(in_srgb,var(--sf-bg)_72%,transparent)] backdrop-blur-[18px] backdrop-saturate-[1.5]">
-          <div className="wrap-x flex h-16 items-center gap-3 md:h-[76px] md:gap-5">
-            <Link href="/" className="flex shrink-0 items-center gap-2" aria-label={`${storeName} home`}>
-              {logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} alt={storeName} className="h-9 w-auto max-w-[220px] object-contain md:h-10" loading="lazy" />
-              ) : (
-                <span className="font-display text-[21px] font-semibold leading-none tracking-[-0.02em] text-cream">
-                  {storeName}
-                </span>
-              )}
-            </Link>
+      {/* Main bar */}
+      <header className="hdr__bar">
+        <div className="hwrap hdr__bar-in">
+          <button
+            type="button"
+            className="hdr__burger"
+            aria-label="Menu"
+            aria-expanded={panel === "menu"}
+            onClick={() => setPanel((p) => (p === "menu" ? "none" : "menu"))}
+          >
+            <span aria-hidden />
+            <span aria-hidden />
+          </button>
 
-            <nav className="ml-2 hidden items-center xl:flex" aria-label="Categories">
-              <Link href="/shop" className={navLink}>
-                All Products
-              </Link>
+          <Link href="/" className="hdr__logo" aria-label={`${storeName} home`}>
+            {logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logo} alt={storeName} loading="lazy" />
+            ) : (
+              <span className="hdr__wordmark">{wordmark}</span>
+            )}
+          </Link>
+
+          <nav className="hdr__nav" aria-label="Categories">
+            <ul className="hdr__nav-list no-scrollbar">
+              <li>
+                <Link href="/shop" className="hdr__nav-link">
+                  All Products
+                </Link>
+              </li>
               {topCategories.map((category) => (
-                <Link key={category._id} href={`/category/${category.slug}`} className={navLink}>
-                  {category.name}
-                </Link>
+                <li key={category._id}>
+                  <Link href={`/category/${category.slug}`} className="hdr__nav-link">
+                    {category.name}
+                  </Link>
+                </li>
               ))}
-            </nav>
+            </ul>
+          </nav>
 
-            <div className="ml-auto flex items-center gap-0.5 sm:gap-1.5">
-              <button
-                type="button"
-                className={iconBtn}
-                aria-label="Search products"
-                aria-expanded={searchOpen}
-                onClick={() => setSearchOpen((v) => !v)}
-              >
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden>
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20.5 20.5-4.6-4.6" />
-                </svg>
-              </button>
-              <Link
-                href="/track-order"
-                className="hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-medium uppercase tracking-[0.09em] text-cream/75 transition hover:text-cream xl:flex"
-              >
-                Track Order
-              </Link>
-              <Link href="/wishlist" className={iconBtn} aria-label="Wishlist">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M12 20.5C7 16.5 3.5 13.2 3.5 9.6 3.5 7.2 5.3 5.5 7.6 5.5c1.7 0 3.4 1 4.4 2.6.9-1.6 2.7-2.6 4.4-2.6 2.3 0 4.1 1.7 4.1 4.1 0 3.6-3.5 6.9-8.5 10.9Z" />
-                </svg>
-                {wishlist.length > 0 && <span className={badge}>{wishlist.length}</span>}
-              </Link>
-              <Link href="/cart" className={iconBtn} aria-label="Cart">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M5.5 8h15l-1.6 10.2a1.5 1.5 0 0 1-1.5 1.3H8.4a1.5 1.5 0 0 1-1.5-1.2L5.5 8Z" />
-                  <path d="M8.8 10V6.8a3.2 3.2 0 0 1 6.4 0V10" />
-                </svg>
-                {cartCount > 0 && <span className={badge}>{cartCount}</span>}
-              </Link>
-              {user ? (
-                <Link
-                  href="/account"
-                  className="ml-1 hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-semibold uppercase tracking-[0.09em] text-cream transition hover:text-primary sm:flex"
-                >
-                  {user.firstName || "Account"}
-                </Link>
-              ) : (
-                <Link
-                  href="/login"
-                  className="ml-1 hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-semibold uppercase tracking-[0.09em] text-cream transition hover:text-primary sm:flex"
-                >
-                  Sign In
-                </Link>
-              )}
-            </div>
+          <div className="hdr__actions">
+            <button
+              type="button"
+              className="hdr__search"
+              aria-label="Search products"
+              aria-expanded={panel === "search"}
+              onClick={() => setPanel((p) => (p === "search" ? "none" : "search"))}
+            >
+              <IconSearch />
+              <span className="hdr__search-label">Search</span>
+              <span className="hdr__kbd" aria-hidden>⌘K</span>
+            </button>
+            <Link href="/shop" className="btn btn--primary hdr__cta">
+              Shop Now <IconArrow className="arr h-4 w-4" />
+            </Link>
+            <Link
+              href="/track-order"
+              className="hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-medium uppercase tracking-[0.09em] text-cream/75 transition hover:text-cream xl:flex"
+            >
+              Track Order
+            </Link>
+            <Link href="/wishlist" className="hdr__icon" aria-label="Wishlist">
+              <IconHeart />
+              {wishlist.length > 0 && <span className="hdr__bubble">{wishlist.length}</span>}
+            </Link>
+            <Link href={user ? "/account" : "/login"} className="hdr__icon" aria-label={user ? "My account" : "Sign in"}>
+              <IconUser />
+            </Link>
+            <Link
+              href={user ? "/account" : "/login"}
+              className="ml-1 hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-semibold uppercase tracking-[0.09em] text-cream transition hover:text-primary sm:flex"
+            >
+              {user ? user.firstName || "Account" : "Sign In"}
+            </Link>
+            <button type="button" className="hdr__icon" aria-label="Cart" onClick={() => setCartOpen(true)}>
+              <IconBag />
+              {cartCount > 0 && <span className="hdr__bubble">{cartCount}</span>}
+            </button>
           </div>
+        </div>
 
-          {searchOpen && (
-            <div className="border-t border-line">
-              <form className="wrap-x flex items-center gap-3 py-3" onSubmit={submitSearch} role="search">
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="shrink-0 text-muted" aria-hidden>
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20.5 20.5-4.6-4.6" />
-                </svg>
+        {/* Search panel */}
+        {panel === "search" && (
+          <div className="hdr__panel">
+            <div className="hdr__panel-card">
+              <form className="flex items-center gap-3 px-6 py-5" onSubmit={submitSearch} role="search">
+                <IconSearch className="h-5 w-5 shrink-0 text-muted" />
                 <input
                   value={term}
                   onChange={(e) => setTerm(e.target.value)}
@@ -164,30 +202,48 @@ export default function Header({
                   placeholder="Search products…"
                   aria-label="Search products"
                   autoFocus
-                  className="w-full border-0 bg-transparent px-0 py-1.5 text-sm text-cream shadow-none placeholder:text-muted-2 focus:shadow-none"
+                  className="w-full border-0 bg-transparent text-base text-cream shadow-none outline-none placeholder:text-muted-2 focus:shadow-none"
                 />
-                <button type="submit" className="mono-label shrink-0 text-primary transition hover:text-cream">
+                <button type="submit" className="btn btn--primary btn--sm shrink-0">
                   Search
                 </button>
               </form>
+              {topCategories.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 border-t border-line px-6 py-4">
+                  <span className="mono-label mr-1 text-muted-2">Browse</span>
+                  {topCategories.slice(0, 6).map((category) => (
+                    <Link
+                      key={category._id}
+                      href={`/category/${category.slug}`}
+                      className="chip transition hover:border-primary"
+                      onClick={() => setPanel("none")}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Category row for small screens */}
-          <nav className="border-t border-line xl:hidden" aria-label="Categories">
-            <div className="no-scrollbar wrap-x flex items-center gap-2 overflow-x-auto py-1.5">
-              <Link href="/shop" className={navLink}>
-                All Products
-              </Link>
-              {topCategories.map((category) => (
-                <Link key={category._id} href={`/category/${category.slug}`} className={navLink}>
-                  {category.name}
-                </Link>
-              ))}
+        {/* Mobile menu panel */}
+        {panel === "menu" && (
+          <div className="hdr__panel">
+            <div className="hdr__panel-card">
+              <nav className="hdr__mobile-links" aria-label="Menu">
+                {menuLinks.map((link, i) => (
+                  <Link key={link.href} href={link.href} onClick={() => setPanel("none")}>
+                    <span className="idx" aria-hidden>{String(i + 1).padStart(2, "0")}</span>
+                    <span>{link.label}</span>
+                    <IconArrow className="h-4 w-4 text-primary" />
+                  </Link>
+                ))}
+              </nav>
             </div>
-          </nav>
-        </div>
+          </div>
+        )}
       </header>
-    </>
+    </div>
   );
 }

@@ -6,14 +6,13 @@ import { useEffect, useState } from "react";
 import { apiCall, type CustomerAddress, type CustomerProfile } from "@/lib/api";
 import { useShop } from "@/lib/store";
 
-const inputCls =
-  "w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mono-label mb-1.5 block text-muted-2";
-
 const emptyAddress: CustomerAddress = {
   street: "", city: "", state: "", zipCode: "", country: "Pakistan", isDefault: false,
 };
 
+/** My Account: the previous build's profile + address-book
+ *  wiring (redirect when signed out, /me fetch + save with the
+ *  session token), restyled as numbered vault panels. */
 export default function AccountPage() {
   const { user, ready, logout } = useShop();
   const router = useRouter();
@@ -44,7 +43,7 @@ export default function AccountPage() {
   }, [user]);
 
   if (!user) {
-    return <p className="py-16 text-center text-muted">Redirecting to sign in…</p>;
+    return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
   }
 
   const save = async (e: React.FormEvent) => {
@@ -70,23 +69,19 @@ export default function AccountPage() {
     setAddresses((prev) => prev.map((a, i) => (i === index ? { ...a, ...patch } : a)));
 
   return (
-    <div className="py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-[clamp(2.5rem,5.5vw,4rem)] font-normal leading-[1.02] tracking-[-0.02em] text-cream">My Account</h1>
-        <div className="flex gap-2">
-          <Link href="/account/orders" className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream">
-            My Orders
-          </Link>
-          <Link href="/wishlist" className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream">
-            Wishlist
-          </Link>
+    <div className="wrap max-w-5xl py-12 md:py-16">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="h1-page">My Account</h1>
+        <div className="flex flex-wrap gap-2.5">
+          <Link href="/account/orders" className="btn btn--ghost btn--sm">My Orders</Link>
+          <Link href="/wishlist" className="btn btn--ghost btn--sm">Wishlist</Link>
           <button
             type="button"
             onClick={() => {
               logout();
               router.push("/");
             }}
-            className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream"
+            className="btn btn--ghost btn--sm"
           >
             Sign Out
           </button>
@@ -94,80 +89,80 @@ export default function AccountPage() {
       </div>
 
       {profile && (
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-3 text-sm text-muted">
           {profile.email} · Customer since{" "}
           {new Date(profile.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long" })}
         </p>
       )}
       {error && <p className="mt-4 text-sm text-primary" role="alert">{error}</p>}
 
-      <form onSubmit={save} className="mt-6 space-y-6">
-        <section className="vault-panel p-6" aria-labelledby="profile-h">
-          <div className="flex items-center gap-3">
-            <span aria-hidden className="mono-label text-primary">01</span>
-            <span aria-hidden className="kicker-bar" />
-          </div>
-          <h2 id="profile-h" className="mt-2 font-display text-xl font-medium tracking-[-0.01em] text-cream">Profile</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <form onSubmit={save} className="mt-8 space-y-6">
+        <section className="panel panel--pad" aria-labelledby="profile-h">
+          <p className="kicker">
+            <span className="kicker__idx">01</span>
+            <span className="kicker__bar" aria-hidden />
+          </p>
+          <h2 id="profile-h" className="mt-3 font-display text-xl font-medium text-cream">Profile</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <div>
-              <label htmlFor="ac-first" className={labelCls}>First name</label>
-              <input id="ac-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputCls} />
+              <label htmlFor="ac-first" className="flabel">First name</label>
+              <input id="ac-first" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="input" />
             </div>
             <div>
-              <label htmlFor="ac-last" className={labelCls}>Last name</label>
-              <input id="ac-last" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputCls} />
+              <label htmlFor="ac-last" className="flabel">Last name</label>
+              <input id="ac-last" value={lastName} onChange={(e) => setLastName(e.target.value)} className="input" />
             </div>
             <div>
-              <label htmlFor="ac-phone" className={labelCls}>Phone</label>
-              <input id="ac-phone" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
+              <label htmlFor="ac-phone" className="flabel">Phone</label>
+              <input id="ac-phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="input" />
             </div>
           </div>
         </section>
 
-        <section className="vault-panel p-6" aria-labelledby="addr-h">
-          <div className="flex items-center gap-3">
-            <span aria-hidden className="mono-label text-primary">02</span>
-            <span aria-hidden className="kicker-bar" />
-          </div>
-          <div className="mt-2 flex items-center justify-between">
-            <h2 id="addr-h" className="font-display text-xl font-medium tracking-[-0.01em] text-cream">Address Book</h2>
+        <section className="panel panel--pad" aria-labelledby="addr-h">
+          <p className="kicker">
+            <span className="kicker__idx">02</span>
+            <span className="kicker__bar" aria-hidden />
+          </p>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <h2 id="addr-h" className="font-display text-xl font-medium text-cream">Address Book</h2>
             <button
               type="button"
               onClick={() => setAddresses((prev) => [...prev, { ...emptyAddress }])}
-              className="btn-ghost-pill px-4 py-1.5 text-sm font-semibold text-primary"
+              className="btn btn--ghost btn--sm"
             >
               + Add Address
             </button>
           </div>
           {addresses.length === 0 && (
-            <p className="mt-3 text-sm text-muted">No saved addresses yet — add one to check out faster.</p>
+            <p className="mt-4 text-sm text-muted">No saved addresses yet — add one to check out faster.</p>
           )}
-          <div className="mt-4 space-y-4">
+          <div className="mt-5 space-y-4">
             {addresses.map((address, i) => (
               <fieldset key={i} className="rounded-2xl border border-line bg-ink-2 p-5">
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <label className={labelCls} htmlFor={`addr-${i}-street`}>Street address</label>
-                    <input id={`addr-${i}-street`} value={address.street} onChange={(e) => updateAddress(i, { street: e.target.value })} className={inputCls} />
+                    <label className="flabel" htmlFor={`addr-${i}-street`}>Street address</label>
+                    <input id={`addr-${i}-street`} value={address.street} onChange={(e) => updateAddress(i, { street: e.target.value })} className="input" />
                   </div>
                   <div>
-                    <label className={labelCls} htmlFor={`addr-${i}-city`}>City</label>
-                    <input id={`addr-${i}-city`} value={address.city} onChange={(e) => updateAddress(i, { city: e.target.value })} className={inputCls} />
+                    <label className="flabel" htmlFor={`addr-${i}-city`}>City</label>
+                    <input id={`addr-${i}-city`} value={address.city} onChange={(e) => updateAddress(i, { city: e.target.value })} className="input" />
                   </div>
                   <div>
-                    <label className={labelCls} htmlFor={`addr-${i}-state`}>State / Province</label>
-                    <input id={`addr-${i}-state`} value={address.state} onChange={(e) => updateAddress(i, { state: e.target.value })} className={inputCls} />
+                    <label className="flabel" htmlFor={`addr-${i}-state`}>State / Province</label>
+                    <input id={`addr-${i}-state`} value={address.state} onChange={(e) => updateAddress(i, { state: e.target.value })} className="input" />
                   </div>
                   <div>
-                    <label className={labelCls} htmlFor={`addr-${i}-zip`}>ZIP / Postal code</label>
-                    <input id={`addr-${i}-zip`} value={address.zipCode} onChange={(e) => updateAddress(i, { zipCode: e.target.value })} className={inputCls} />
+                    <label className="flabel" htmlFor={`addr-${i}-zip`}>ZIP / Postal code</label>
+                    <input id={`addr-${i}-zip`} value={address.zipCode} onChange={(e) => updateAddress(i, { zipCode: e.target.value })} className="input" />
                   </div>
                   <div>
-                    <label className={labelCls} htmlFor={`addr-${i}-country`}>Country</label>
-                    <input id={`addr-${i}-country`} value={address.country} onChange={(e) => updateAddress(i, { country: e.target.value })} className={inputCls} />
+                    <label className="flabel" htmlFor={`addr-${i}-country`}>Country</label>
+                    <input id={`addr-${i}-country`} value={address.country} onChange={(e) => updateAddress(i, { country: e.target.value })} className="input" />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
+                <div className="mt-4 flex items-center justify-between">
                   <label className="flex items-center gap-2 text-sm text-muted">
                     <input
                       type="checkbox"
@@ -175,7 +170,7 @@ export default function AccountPage() {
                       onChange={(e) =>
                         setAddresses((prev) => prev.map((a, j) => ({ ...a, isDefault: e.target.checked ? j === i : a.isDefault && j !== i })))
                       }
-                      className="accent-primary"
+                      className="accent-[var(--sf-primary)]"
                     />
                     Default address
                   </label>
@@ -193,7 +188,7 @@ export default function AccountPage() {
         </section>
 
         {message && <p className="text-sm text-emerald-400" role="status">{message}</p>}
-        <button type="submit" disabled={saving} className="btn-primary-pill btn-shine px-9 py-4 font-display text-[13px] font-semibold uppercase tracking-[0.08em] disabled:opacity-60">
+        <button type="submit" disabled={saving} className="btn btn--primary disabled:opacity-60">
           {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>

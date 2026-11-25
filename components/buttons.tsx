@@ -3,7 +3,14 @@
 import { useState } from "react";
 import type { CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
+import { useCartUI } from "./CartDrawer";
 
+/**
+ * The card and buy-box actions. Same wiring as before (the shop
+ * store's addToCart / toggleWishlist); the one behaviour the
+ * reference store adds is the cart pop-up — a successful add
+ * opens the cart drawer, like hodl's mini-cart.
+ */
 export function AddToCartButton({
   product,
   quantity = 1,
@@ -18,6 +25,7 @@ export function AddToCartButton({
   label?: string;
 }) {
   const { addToCart } = useShop();
+  const { setOpen } = useCartUI();
   const [added, setAdded] = useState(false);
   const out = product.stock <= 0;
   return (
@@ -27,23 +35,23 @@ export function AddToCartButton({
       onClick={() => {
         addToCart(product, quantity, variant);
         setAdded(true);
-        setTimeout(() => setAdded(false), 1500);
+        setTimeout(() => {
+          setAdded(false);
+          setOpen(true);
+        }, 350);
       }}
-      className={`font-display font-bold uppercase tracking-[0.08em] transition ${
-        out
-          ? "cursor-not-allowed rounded-full bg-surface-2 text-muted-2"
-          : "btn-primary-pill btn-shine"
-      } ${className}`}
+      className={`btn ${out ? "cursor-not-allowed bg-surface-2 text-muted-2 shadow-none" : "btn--primary"} ${className}`}
     >
       {out ? "Out of Stock" : added ? "Added ✓" : label}
     </button>
   );
 }
 
-/** Circular "+" quick-add (hodl vcard footer action): one tap adds a
- *  single unit without leaving the grid. */
+/** Circular "+" quick-add (the card footer's action): one tap adds
+ *  a single unit and pops the cart drawer. */
 export function QuickAddButton({ product }: { product: CatalogProduct }) {
   const { addToCart } = useShop();
+  const { setOpen } = useCartUI();
   const [added, setAdded] = useState(false);
   const out = product.stock <= 0;
   return (
@@ -55,13 +63,12 @@ export function QuickAddButton({ product }: { product: CatalogProduct }) {
       onClick={() => {
         addToCart(product, 1);
         setAdded(true);
-        setTimeout(() => setAdded(false), 1200);
+        setTimeout(() => {
+          setAdded(false);
+          setOpen(true);
+        }, 350);
       }}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold transition ${
-        out
-          ? "cursor-not-allowed border border-line text-muted-2"
-          : "border border-primary/60 text-primary shadow-glow hover:bg-primary hover:text-white active:scale-95"
-      }`}
+      className="plus-btn"
     >
       <span aria-hidden>{added ? "✓" : "+"}</span>
     </button>
@@ -77,11 +84,7 @@ export function WishlistButton({ product, className = "" }: { product: CatalogPr
       onClick={() => toggleWishlist(product)}
       aria-label={active ? "Remove from wishlist" : "Add to wishlist"}
       aria-pressed={active}
-      className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition ${
-        active
-          ? "border-primary bg-primary text-white"
-          : "border-line bg-ink/50 text-muted hover:border-primary hover:text-cream"
-      } ${className}`}
+      className={`wish-btn ${active ? "is-on" : ""} ${className}`}
     >
       <span aria-hidden>{active ? "♥" : "♡"}</span>
     </button>

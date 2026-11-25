@@ -1,13 +1,21 @@
+"use client";
+
 import Link from "next/link";
+import { useCallback } from "react";
 import { discountPercent, formatMoney, type CatalogProduct } from "@/lib/api";
 import { AddToCartButton, QuickAddButton, WishlistButton } from "./buttons";
 import RatingStars from "./RatingStars";
 
 /**
- * The hodl "vcard": a vault panel (24px radius, hairline border,
- * surface-gradient fill) whose media sits on a radial accent glow.
- * Hover tints the border to the accent, blooms a deep accent shadow
- * and zooms the image over 1s. All strings are the catalog's own.
+ * The product card, section-for-section the reference store's
+ * card: a 24px-radius panel whose square media sits on a radial
+ * accent glow (image zooms 1.06 over 1s on hover, the border
+ * blooms to the accent with a deep accent shadow, and a radial
+ * mouse-glow follows the pointer), a solid discount pill and a
+ * glass wishlist disc over the media, then category, name, rating,
+ * a one-line tagline, the spec ledger, and the price foot with the
+ * round quick-add — plus the full-width Add to Cart the previous
+ * build carried. All strings are the catalog's own.
  */
 export default function ProductCard({
   product,
@@ -18,50 +26,49 @@ export default function ProductCard({
 }) {
   const discount = discountPercent(product);
   const out = product.stock <= 0;
-  // The hodl vcard's spec ledger: the product's own attributes when
-  // it has them, otherwise its brand + SKU — real catalog fields only.
+  // The spec ledger: the product's own attributes when it has
+  // them, otherwise its brand + SKU — real catalog fields only.
   const ledgerRows = product.attributes.length
     ? product.attributes.slice(0, 3).map((a) => ({ key: a.name, value: a.value }))
     : [
         ...(product.brand ? [{ key: "Brand", value: product.brand.name }] : []),
         { key: "SKU", value: product.sku },
       ];
+
+  const onMove = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+  }, []);
+
   return (
-    <article data-reveal className="vcard group relative flex flex-col">
-      <div className="media-glow relative aspect-square overflow-hidden">
-        <Link href={`/product/${product.slug}`} aria-label={product.name} className="block h-full w-full">
+    <article className="card group" data-reveal onMouseMove={onMove}>
+      <div className="card__media">
+        <Link href={`/product/${product.slug}`} aria-label={product.name} className="absolute inset-0 block">
           {product.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.image}
-              alt={product.images[0]?.alt || product.name}
-              loading="lazy"
-              className="h-full w-full object-cover transition duration-1000 group-hover:scale-[1.06]"
-            />
+            <img src={product.image} alt={product.images[0]?.alt || product.name} loading="lazy" />
           ) : (
-            <span className="flex h-full w-full items-center justify-center font-display text-5xl font-black text-line">
+            <span className="flex h-full w-full items-center justify-center font-display text-5xl text-line">
               {product.name.charAt(0)}
             </span>
           )}
         </Link>
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,color-mix(in_srgb,var(--sf-primary)_14%,transparent),transparent_60%)]"
-        />
         {discount && (
-          <span className="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-white shadow-glow">
+          <span className="absolute left-3.5 top-3.5 z-[2] rounded-full bg-primary px-2.5 py-1 font-display text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white shadow-glow">
             −{discount}%
           </span>
         )}
         {out && (
-          <span className="absolute bottom-3 left-3 rounded-full bg-ink/85 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-cream backdrop-blur">
+          <span className="absolute bottom-3.5 left-3.5 z-[2] rounded-full bg-black/60 px-2.5 py-1 font-display text-[10.5px] font-semibold uppercase tracking-[0.12em] text-white backdrop-blur">
             Out of Stock
           </span>
         )}
-        <WishlistButton product={product} className="absolute right-3 top-3" />
+        <WishlistButton product={product} className="card__wish" />
       </div>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-5">
+      <div className="card__body">
         {product.category && (
           <Link
             href={`/category/${product.category.slug}`}
@@ -70,50 +77,45 @@ export default function ProductCard({
             {product.category.name}
           </Link>
         )}
-        <Link
-          href={`/product/${product.slug}`}
-          className="line-clamp-2 font-display text-[21px] font-semibold leading-snug text-cream underline-offset-4 transition group-hover:underline"
-        >
-          {product.name}
-        </Link>
+        <h3 className="card__name">
+          <Link href={`/product/${product.slug}`}>{product.name}</Link>
+        </h3>
         {product.reviewCount > 0 ? (
-          <span className="flex items-center gap-1.5 text-xs text-muted">
+          <p className="card__rating">
             <RatingStars rating={product.averageRating} />
-            {product.averageRating.toFixed(1)} ({product.reviewCount})
-          </span>
+            <span>
+              {product.averageRating.toFixed(1)} ({product.reviewCount})
+            </span>
+          </p>
         ) : (
-          <span className="text-xs text-muted-2">No reviews yet</span>
+          <p className="text-xs text-muted-2">No reviews yet</p>
         )}
-        {product.description?.trim() && (
-          <p className="line-clamp-1 text-sm text-muted">{product.description.trim()}</p>
-        )}
+        {product.description?.trim() && <p className="card__tag">{product.description.trim()}</p>}
         {ledgerRows.length > 0 && (
-          <dl className="mt-2.5 border-y border-line">
+          <dl className="card__specs">
             {ledgerRows.map((row) => (
-              <div
-                key={row.key}
-                className="flex items-baseline justify-between gap-3 border-t border-line py-1.5 first:border-t-0"
-              >
-                <dt className="mono-label text-[10px] text-muted-2">{row.key}</dt>
-                <dd className="truncate text-[13px] text-cream">{row.value}</dd>
+              <div key={row.key}>
+                <dt>{row.key}</dt>
+                <dd>{row.value}</dd>
               </div>
             ))}
           </dl>
         )}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-[19px] font-semibold text-cream">{formatMoney(product.price, currency)}</span>
+        <div className="card__foot">
+          <p className="card__price">
+            {formatMoney(product.price, currency)}
             {product.comparePrice && product.comparePrice > product.price && (
-              <span className="text-sm text-muted-2 line-through">
-                {formatMoney(product.comparePrice, currency)}
-              </span>
+              <s>{formatMoney(product.comparePrice, currency)}</s>
             )}
+          </p>
+          <div className="card__actions">
+            <Link href={`/product/${product.slug}`} className="open-btn">
+              View
+            </Link>
+            <QuickAddButton product={product} />
           </div>
-          <QuickAddButton product={product} />
         </div>
-        <div className="mt-3">
-          <AddToCartButton product={product} className="w-full px-4 py-3 text-[13px]" />
-        </div>
+        <AddToCartButton product={product} className="btn--sm mt-1 w-full" />
       </div>
     </article>
   );
