@@ -12,7 +12,7 @@ import {
 } from "react";
 import { apiCall, formatMoney, type ShippingOptionSet, type StoreConfig } from "@/lib/api";
 import { useShop } from "@/lib/store";
-import { IconCheck, IconClose } from "./icons";
+import { IconArrow, IconBag, IconCheck, IconClose } from "./icons";
 
 /**
  * The cart pop-up, in the reference store's behaviour: adding a
@@ -40,9 +40,13 @@ export default function CartDrawer() {
   const [currency, setCurrency] = useState("USD");
   const [paymentNames, setPaymentNames] = useState<string[]>([]);
   const [shipping, setShipping] = useState<ShippingOptionSet | null>(null);
+  // The dual button's expanded side (hover/focus intent); null =
+  // the divider rests in the centre with both zones at half width.
+  const [dualSide, setDualSide] = useState<"left" | "right" | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setDualSide(null);
     apiCall<StoreConfig>("GET", "/api/storefront/config")
       .then((config) => {
         setCurrency(config.currency || "USD");
@@ -195,11 +199,51 @@ export default function CartDrawer() {
               <p className="mt-1.5 text-xs text-muted-2">
                 Shipping and discounts are calculated at checkout.
               </p>
-              <Link href="/checkout" className="btn btn--primary btn--block mt-4" onClick={() => setOpen(false)}>
-                Proceed to Checkout
-              </Link>
-              <Link href="/cart" className="btn btn--ghost btn--block mt-2.5" onClick={() => setOpen(false)}>
-                View Cart
+              {/* Dual-action button (Ahsan, 2026-11-26): ONE
+                  gradient pill, two actions — Proceed to Checkout
+                  on the left, View Cart on the right — split by a
+                  centre divider with each zone's icon hugging the
+                  divider. Hovering (or focusing) a zone slides the
+                  divider away from it: that zone expands to its
+                  full text while the other compresses to its icon
+                  alone. Both zones stay real links; on touch the
+                  pill rests centred and each half taps its own
+                  action. Below it, Shop More keeps the shopper
+                  shopping (close + /shop). */}
+              <div
+                className={`dualbtn mt-4${dualSide ? ` dualbtn--${dualSide}` : ""}`}
+                onMouseLeave={() => setDualSide(null)}
+              >
+                <Link
+                  href="/checkout"
+                  className="dualbtn__zone dualbtn__zone--left"
+                  onClick={() => setOpen(false)}
+                  onMouseEnter={() => setDualSide("left")}
+                  onFocus={() => setDualSide("left")}
+                  onBlur={() => setDualSide(null)}
+                >
+                  <span className="dualbtn__label">Proceed to Checkout</span>
+                  <IconArrow className="dualbtn__icon" />
+                </Link>
+                <span className="dualbtn__divider" aria-hidden />
+                <Link
+                  href="/cart"
+                  className="dualbtn__zone dualbtn__zone--right"
+                  onClick={() => setOpen(false)}
+                  onMouseEnter={() => setDualSide("right")}
+                  onFocus={() => setDualSide("right")}
+                  onBlur={() => setDualSide(null)}
+                >
+                  <IconBag className="dualbtn__icon" />
+                  <span className="dualbtn__label">View Cart</span>
+                </Link>
+              </div>
+              <Link
+                href="/shop"
+                className="btn btn--ghost btn--block btn--shine mt-2.5"
+                onClick={() => setOpen(false)}
+              >
+                Shop More
               </Link>
               <ul className="mt-4 space-y-1.5 text-[13px] text-muted">
                 <li className="flex items-center gap-2">

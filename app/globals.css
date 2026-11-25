@@ -299,7 +299,12 @@ textarea:focus-visible {
     0 16px 40px -14px var(--sf-glow);
   overflow: hidden;
 }
-.btn--primary::after {
+/* The glass shine sweep — one implementation, shared by the
+   primary buttons, the drawer's dual button shell and any ghost
+   button carrying .btn--shine (the drawer's Shop More). */
+.btn--primary::after,
+.btn--shine::after,
+.dualbtn::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -313,12 +318,17 @@ textarea:focus-visible {
   transform: translateX(-120%);
   transition: transform 0.8s var(--ease);
 }
+.btn--shine {
+  overflow: hidden;
+}
 .btn--primary:hover {
   box-shadow:
     inset 0 0 0 1px rgb(255 255 255 / 0.16),
     0 18px 50px -10px var(--sf-glow);
 }
-.btn--primary:hover::after {
+.btn--primary:hover::after,
+.btn--shine:hover::after,
+.dualbtn:hover::after {
   transform: translateX(120%);
 }
 .btn--primary:active {
@@ -3224,6 +3234,115 @@ a.tick__fact:hover {
 .drawer__foot {
   border-top: 1px solid var(--sf-line);
   padding: 20px 22px 24px;
+}
+/* Dual-action button (Ahsan, 2026-11-26): ONE gradient pill in
+   the primary buttons' language (same --grad-btn, ring, glow and
+   glass shine via the shared ::after above) carrying both drawer
+   actions. The two zones are real links whose flex-grow ratio is
+   the whole animation: at rest 1:1 with the divider centred;
+   hovering/focusing a zone raises its grow so the divider slides
+   away from it — the hovered zone keeps icon + full text while
+   the other compresses until only its icon (hugging the divider)
+   remains, its label faded and clipped. Touch never hovers: the
+   pill rests centred and each half taps its own action. */
+.dualbtn {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 54px;
+  border-radius: 999px;
+  background: var(--grad-btn);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    0 16px 40px -14px var(--sf-glow);
+  overflow: hidden;
+  isolation: isolate;
+  transition: box-shadow 0.35s ease;
+}
+.dualbtn:hover {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.16),
+    0 18px 50px -10px var(--sf-glow);
+}
+.dualbtn__zone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 10px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    flex-grow 0.28s var(--ease),
+    background-color 0.25s ease;
+}
+.dualbtn__zone:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+.dualbtn__zone:focus-visible {
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.65);
+  outline: none;
+}
+.dualbtn--left .dualbtn__zone--left {
+  flex-grow: 4.2;
+}
+.dualbtn--left .dualbtn__zone--right {
+  flex-grow: 1;
+}
+.dualbtn--right .dualbtn__zone--left {
+  flex-grow: 1;
+}
+.dualbtn--right .dualbtn__zone--right {
+  flex-grow: 4.2;
+}
+.dualbtn__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  transition: opacity 0.16s ease;
+}
+.dualbtn--left .dualbtn__zone--right .dualbtn__label,
+.dualbtn--right .dualbtn__zone--left .dualbtn__label {
+  opacity: 0;
+}
+.dualbtn__icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.dualbtn__divider {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 26px;
+  background: rgb(255 255 255 / 0.3);
+}
+@media (max-width: 480px) {
+  .dualbtn__zone {
+    gap: 5px;
+    padding: 0 8px;
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+  .dualbtn__icon {
+    width: 15px;
+    height: 15px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dualbtn__zone,
+  .dualbtn__label,
+  .dualbtn::after {
+    transition: none;
+  }
 }
 .ship-progress {
   height: 6px;
