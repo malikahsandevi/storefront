@@ -3280,7 +3280,7 @@ a.tick__fact:hover {
   white-space: nowrap;
   overflow: hidden;
   transition:
-    flex-grow 0.28s var(--ease),
+    flex-grow 0.5s var(--ease),
     background-color 0.25s ease;
 }
 .dualbtn__zone:hover {
@@ -3307,7 +3307,7 @@ a.tick__fact:hover {
   min-width: 0;
   overflow: hidden;
   text-align: center;
-  transition: opacity 0.16s ease;
+  transition: opacity 0.3s ease;
 }
 .dualbtn--left .dualbtn__zone--right .dualbtn__label,
 .dualbtn--right .dualbtn__zone--left .dualbtn__label {
@@ -3318,12 +3318,21 @@ a.tick__fact:hover {
   width: 18px;
   height: 18px;
 }
+/* The divider (Ahsan, 2026-11-26): BARI + MOTI + DIAGONAL —
+   a bold 4px bar spanning the pill's full height, slanted
+   like a slash. skewX on a stretched full-height bar leans
+   its ends past the corners, so scaleY(1.15) plus the
+   shell's overflow:hidden keeps the slant clipped neatly
+   inside the rounded shape; as a flex item between the
+   zones it rides the animated flex-grow proportions, so it
+   still slides with the hover exactly as the hairline did. */
 .dualbtn__divider {
   flex: none;
-  align-self: center;
-  width: 1px;
-  height: 26px;
-  background: rgb(255 255 255 / 0.3);
+  align-self: stretch;
+  width: 4px;
+  background: rgb(255 255 255 / 0.45);
+  box-shadow: 0 0 12px rgb(0 0 0 / 0.2);
+  transform: skewX(-16deg) scaleY(1.15);
 }
 @media (max-width: 480px) {
   .dualbtn__zone {
