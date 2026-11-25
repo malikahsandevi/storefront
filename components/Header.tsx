@@ -6,7 +6,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
-import { IconArrow, IconBag, IconChevron, IconHeart, IconMoon, IconSearch, IconSun, IconUser } from "./icons";
+import { IconArrow, IconBag, IconCaretDown, IconChevron, IconHeart, IconMoon, IconSearch, IconSun, IconUser } from "./icons";
 
 /**
  * The store's header: ONE sticky glass bar (76px) — wordmark
@@ -243,6 +243,11 @@ export default function Header({
                       }
                     >
                       {category.name}
+                      {/* Dropdown caret: only on categories WITH
+                          subcategories — the same set that opens
+                          the mega panel — so visitors can tell
+                          which pill items open it. */}
+                      {subs.length > 0 && <IconCaretDown className="hdr__nav-caret" />}
                     </Link>
                   </li>
                 );

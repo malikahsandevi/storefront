@@ -38,6 +38,14 @@ export function IconChevron({ className }: P) {
   );
 }
 
+export function IconCaretDown({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m5.5 9.5 6.5 6.5 6.5-6.5" />
+    </svg>
+  );
+}
+
 export function IconSearch({ className }: P) {
   return (
     <svg {...base} className={className}>
