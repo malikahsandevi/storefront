@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { apiCall, formatMoney, type TrackedOrder } from "@/lib/api";
 
 const inputCls =
-  "w-full border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-muted-2";
+  "w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mono-label mb-1.5 block text-muted-2";
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
@@ -45,7 +45,7 @@ export default function TrackOrderPage() {
       <p className="mt-3 text-muted">
         Enter the order number from your confirmation and the email you ordered with — no account needed.
       </p>
-      <form onSubmit={submit} className="mt-8 grid gap-4 border border-line bg-surface p-6 sm:grid-cols-2">
+      <form onSubmit={submit} className="vault-panel mt-8 grid gap-4 p-6 sm:grid-cols-2">
         <div>
           <label htmlFor="to-number" className={labelCls}>Order number *</label>
           <input id="to-number" required value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} placeholder="ORD-260124-1234" className={inputCls} />
@@ -54,17 +54,17 @@ export default function TrackOrderPage() {
           <label htmlFor="to-email" className={labelCls}>Email *</label>
           <input id="to-email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputCls} />
         </div>
-        <button type="submit" disabled={busy} className="bg-primary px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-60 sm:col-span-2 sm:w-fit">
+        <button type="submit" disabled={busy} className="btn-primary-pill btn-shine px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] disabled:opacity-60 sm:col-span-2 sm:w-fit">
           {busy ? "Looking up…" : "Track Order"}
         </button>
       </form>
       {error && <p className="mt-4 text-sm text-primary" role="alert">{error}</p>}
 
       {order && (
-        <section className="mt-6 border border-line bg-surface p-6" aria-live="polite">
+        <section className="vault-panel mt-6 p-6" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display font-bold text-cream">{order.orderNumber}</h2>
-            <span className="bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white">
+            <span className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white">
               {order.status}
             </span>
           </div>
@@ -81,18 +81,18 @@ export default function TrackOrderPage() {
               </li>
             ))}
           </ul>
-          <dl className="mt-4 space-y-1 border-t border-line pt-4 text-sm">
-            <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd className="text-cream">{formatMoney(order.subtotal, currency)}</dd></div>
+          <dl className="mt-4 divide-y divide-line border-t border-line text-sm">
+            <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Subtotal</dt><dd className="text-cream">{formatMoney(order.subtotal, currency)}</dd></div>
             {order.discount > 0 && (
-              <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd className="text-emerald-400">−{formatMoney(order.discount, currency)}</dd></div>
+              <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Discount</dt><dd className="text-emerald-400">−{formatMoney(order.discount, currency)}</dd></div>
             )}
-            <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd className="text-cream">{order.shippingCost === 0 ? "Free" : formatMoney(order.shippingCost, currency)}</dd></div>
-            <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{order.paymentMethod} — {order.paymentStatus}</dd></div>
-            <div className="flex justify-between text-base"><dt className="font-bold text-cream">Total</dt><dd className="font-extrabold text-cream">{formatMoney(order.total, currency)}</dd></div>
+            <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Shipping</dt><dd className="text-cream">{order.shippingCost === 0 ? "Free" : formatMoney(order.shippingCost, currency)}</dd></div>
+            <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Payment</dt><dd className="text-cream">{order.paymentMethod} — {order.paymentStatus}</dd></div>
+            <div className="flex items-baseline justify-between py-2.5 text-base"><dt className="font-bold text-cream">Total</dt><dd className="font-extrabold text-cream">{formatMoney(order.total, currency)}</dd></div>
           </dl>
 
           {(order.shipment.trackingNumber || order.shipment.shippedAt) && (
-            <div className="mt-4 bg-ink-2 p-5 text-sm">
+            <div className="mt-4 rounded-2xl bg-ink-2 p-5 text-sm">
               <p className="font-semibold text-cream">Shipment</p>
               {order.shipment.courierName && <p className="mt-1 text-muted">Courier: {order.shipment.courierName}</p>}
               {order.shipment.trackingNumber && <p className="text-muted">Tracking number: {order.shipment.trackingNumber}</p>}

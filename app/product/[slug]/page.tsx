@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
 import RatingStars from "@/components/RatingStars";
 import ReviewForm from "@/components/ReviewForm";
+import SectionHead from "@/components/SectionHead";
 import { BuyPanel, ProductGallery } from "@/components/ProductDetail";
 import {
   SITE_URL,
@@ -90,7 +91,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <div className="py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <nav aria-label="Breadcrumb" className="mb-6 text-xs font-medium uppercase tracking-[0.12em] text-muted-2">
+      <nav aria-label="Breadcrumb" className="mono-label mb-6 text-muted-2">
         <Link href="/" className="transition hover:text-cream">Home</Link>
         <span aria-hidden className="px-1.5">/</span>
         <Link href="/shop" className="transition hover:text-cream">Shop</Link>
@@ -110,7 +111,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         <ProductGallery product={product} />
         <div>
           {product.category && (
-            <Link href={`/category/${product.category.slug}`} className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            <Link href={`/category/${product.category.slug}`} className="mono-label text-primary">
               {product.category.name}
             </Link>
           )}
@@ -121,62 +122,94 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
-      <section aria-labelledby="desc-heading" className="mt-16 border-t-2 border-cream/80 pt-7">
-        <h2 id="desc-heading" className="font-display text-2xl font-extrabold uppercase tracking-tight text-cream">Description</h2>
-        <p className="mt-3 whitespace-pre-line leading-relaxed text-muted">{product.description}</p>
-        {product.attributes.length > 0 && (
-          <table className="mt-5 w-full max-w-lg text-sm">
-            <tbody>
-              {product.attributes.map((attr) => (
-                <tr key={attr.name} className="border-b border-line/60 last:border-0">
-                  <th className="py-2 pr-4 text-left font-medium text-muted-2">{attr.name}</th>
-                  <td className="py-2 text-cream">{attr.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* 01 — At a glance: the spec ledger (hairline rows, mono keys). */}
+      <section aria-labelledby="glance-heading" className="mt-16">
+        <SectionHead no="01" title="At a Glance" id="glance-heading" />
+        <div data-reveal className="vault-panel px-6 py-2 sm:px-8">
+          <dl className="[&>div]:border-b [&>div]:border-line/70 [&>div:last-child]:border-b-0">
+            {product.category && (
+              <div className="flex items-baseline justify-between gap-6 py-3.5">
+                <dt className="mono-label text-muted-2">Category</dt>
+                <dd className="text-right text-sm font-medium text-cream">
+                  <Link href={`/category/${product.category.slug}`} className="transition hover:text-primary">
+                    {product.category.name}
+                  </Link>
+                </dd>
+              </div>
+            )}
+            {product.brand && (
+              <div className="flex items-baseline justify-between gap-6 py-3.5">
+                <dt className="mono-label text-muted-2">Brand</dt>
+                <dd className="text-right text-sm font-medium text-cream">{product.brand.name}</dd>
+              </div>
+            )}
+            <div className="flex items-baseline justify-between gap-6 py-3.5">
+              <dt className="mono-label text-muted-2">SKU</dt>
+              <dd className="text-right text-sm font-medium text-cream">{product.sku}</dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-6 py-3.5">
+              <dt className="mono-label text-muted-2">Availability</dt>
+              <dd className="text-right text-sm font-medium text-cream">
+                {product.stock > 0 ? `In stock — ${product.stock} available` : "Out of stock"}
+              </dd>
+            </div>
+            {product.attributes.map((attr) => (
+              <div key={attr.name} className="flex items-baseline justify-between gap-6 py-3.5">
+                <dt className="mono-label text-muted-2">{attr.name}</dt>
+                <dd className="text-right text-sm font-medium text-cream">{attr.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </section>
 
-      <section aria-labelledby="reviews-heading" className="mt-14 border-t-2 border-cream/80 pt-7">
-        <h2 id="reviews-heading" className="font-display text-2xl font-extrabold uppercase tracking-tight text-cream">
-          Reviews{product.reviewCount > 0 ? ` (${product.reviewCount})` : ""}
-        </h2>
-        {reviews.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">No reviews yet — be the first to share your experience.</p>
-        ) : (
-          <ul className="mt-4 space-y-4">
-            {reviews.map((review) => (
-              <li key={review._id} className="border border-line bg-surface p-6">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
-                    {review.author.name.charAt(0).toUpperCase()}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-cream">{review.author.name}</p>
-                    <p className="flex items-center gap-2 text-xs text-muted-2">
-                      <RatingStars rating={review.rating} />
-                      {new Date(review.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                    </p>
+      {/* 02 — Description, as a vault panel. */}
+      <section aria-labelledby="desc-heading" className="mt-14">
+        <SectionHead no="02" title="Description" id="desc-heading" />
+        <div data-reveal className="vault-panel p-6 sm:p-8">
+          <p className="whitespace-pre-line leading-relaxed text-muted">{product.description}</p>
+        </div>
+      </section>
+
+      {/* 03 — Reviews, as a vault panel; the form is its own panel. */}
+      <section aria-labelledby="reviews-heading" className="mt-14">
+        <SectionHead no="03" title={`Reviews${product.reviewCount > 0 ? ` (${product.reviewCount})` : ""}`} id="reviews-heading" />
+        <div data-reveal className="vault-panel p-6 sm:p-8">
+          {reviews.length === 0 ? (
+            <p className="text-sm text-muted">No reviews yet — be the first to share your experience.</p>
+          ) : (
+            <ul className="space-y-4">
+              {reviews.map((review) => (
+                <li key={review._id} className="rounded-2xl border border-line bg-ink-2 p-5 sm:p-6">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
+                      {review.author.name.charAt(0).toUpperCase()}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-cream">{review.author.name}</p>
+                      <p className="flex items-center gap-2 text-xs text-muted-2">
+                        <RatingStars rating={review.rating} className="text-primary" />
+                        {new Date(review.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <p className="mt-3 font-semibold text-cream">{review.title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted">{review.content}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <p className="mt-3 font-semibold text-cream">{review.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted">{review.content}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <div className="mt-6">
           <ReviewForm product={product} />
         </div>
       </section>
 
+      {/* 04 — Related products, under a numbered kicker head. */}
       {relatedProducts.length > 0 && (
         <section aria-labelledby="related-heading" className="mt-24">
-          <div className="mb-9 border-t-2 border-cream/80 pt-5">
-            <h2 id="related-heading" className="font-display text-3xl font-extrabold uppercase tracking-tight text-cream sm:text-4xl">Related Products</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          <SectionHead no="04" title="Related Products" id="related-heading" />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {relatedProducts.map((related) => (
               <ProductCard key={related._id} product={related} currency={config.currency} />
             ))}

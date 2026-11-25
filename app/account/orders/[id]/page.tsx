@@ -34,7 +34,7 @@ export default function MyOrderDetailPage() {
       <div className="py-16 text-center">
         <h1 className="font-display text-2xl font-extrabold uppercase tracking-tight text-cream">Order not found</h1>
         <p className="mt-2 text-muted">{error}</p>
-        <Link href="/account/orders" className="mt-5 inline-block bg-primary px-6 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark">
+        <Link href="/account/orders" className="btn-primary-pill btn-shine mt-5 inline-block px-6 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
           Back to My Orders
         </Link>
       </div>
@@ -47,39 +47,39 @@ export default function MyOrderDetailPage() {
       <Link href="/account/orders" className="text-sm text-muted transition hover:text-cream">← My Orders</Link>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">{order.orderNumber}</h1>
-        <span className="bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white">{order.status}</span>
+        <span className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white">{order.status}</span>
       </div>
       <p className="mt-1 text-sm text-muted">
         Placed {new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
       </p>
 
-      <section className="mt-6 border border-line bg-surface p-6">
+      <section className="vault-panel mt-6 p-6">
         <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Items</h2>
         <ul className="mt-3 space-y-3">
           {order.items.map((item, i) => (
             <li key={i} className="flex items-center gap-3 text-sm">
               {item.image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.image} alt="" loading="lazy" className="h-14 w-14 object-cover" />
+                <img src={item.image} alt="" loading="lazy" className="h-14 w-14 rounded-xl object-cover" />
               )}
               <span className="flex-1 text-muted">{item.name} <span className="text-muted-2">× {item.quantity}</span></span>
               <span className="font-medium text-cream">{formatMoney(item.price * item.quantity, currency)}</span>
             </li>
           ))}
         </ul>
-        <dl className="mt-4 space-y-1 border-t border-line pt-4 text-sm">
-          <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd className="text-cream">{formatMoney(order.subtotal, currency)}</dd></div>
+        <dl className="mt-4 divide-y divide-line border-t border-line text-sm">
+          <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Subtotal</dt><dd className="text-cream">{formatMoney(order.subtotal, currency)}</dd></div>
           {order.discount > 0 && (
-            <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd className="text-emerald-400">−{formatMoney(order.discount, currency)}</dd></div>
+            <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Discount</dt><dd className="text-emerald-400">−{formatMoney(order.discount, currency)}</dd></div>
           )}
-          <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd className="text-cream">{order.shippingCost === 0 ? "Free" : formatMoney(order.shippingCost, currency)}</dd></div>
-          <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{order.paymentMethod} — {order.paymentStatus}</dd></div>
-          <div className="flex justify-between text-base"><dt className="font-bold text-cream">Total</dt><dd className="font-extrabold text-cream">{formatMoney(order.total, currency)}</dd></div>
+          <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Shipping</dt><dd className="text-cream">{order.shippingCost === 0 ? "Free" : formatMoney(order.shippingCost, currency)}</dd></div>
+          <div className="flex items-baseline justify-between py-2"><dt className="mono-label text-muted">Payment</dt><dd className="text-cream">{order.paymentMethod} — {order.paymentStatus}</dd></div>
+          <div className="flex items-baseline justify-between py-2.5 text-base"><dt className="font-bold text-cream">Total</dt><dd className="font-extrabold text-cream">{formatMoney(order.total, currency)}</dd></div>
         </dl>
       </section>
 
       {order.shippingAddress && (
-        <section className="mt-4 border border-line bg-surface p-6">
+        <section className="vault-panel mt-4 p-6">
           <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Delivery Address</h2>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {order.shippingAddress.street}, {order.shippingAddress.city}, {order.shippingAddress.state}{" "}

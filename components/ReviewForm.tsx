@@ -14,11 +14,11 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
   const inputCls =
-    "w-full border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+    "w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
 
   if (state === "done") {
     return (
-      <div className="border border-line bg-surface p-6">
+      <div className="vault-panel p-6 sm:p-8">
         <p className="font-semibold text-cream">Thank you for your review.</p>
         <p className="mt-1 text-sm text-muted">It is awaiting approval and will appear here once approved.</p>
       </div>
@@ -27,7 +27,7 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
 
   return (
     <form
-      className="border border-line bg-surface p-6"
+      className="vault-panel p-6 sm:p-8"
       onSubmit={async (e) => {
         e.preventDefault();
         setState("sending");
@@ -61,7 +61,7 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
             aria-checked={rating === star}
             aria-label={`${star} star${star > 1 ? "s" : ""}`}
             onClick={() => setRating(star)}
-            className={`text-2xl transition ${star <= rating ? "text-amber-400" : "text-line hover:text-amber-400/60"}`}
+            className={`text-2xl transition ${star <= rating ? "text-primary" : "text-line hover:text-primary/60"}`}
           >
             ★
           </button>
@@ -80,7 +80,7 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
       <button
         type="submit"
         disabled={state === "sending"}
-        className="mt-4 bg-primary px-7 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-60"
+        className="btn-primary-pill btn-shine mt-4 px-7 py-3 font-display text-[13px] font-bold uppercase tracking-[0.1em] disabled:opacity-60"
       >
         {state === "sending" ? "Submitting…" : "Submit Review"}
       </button>

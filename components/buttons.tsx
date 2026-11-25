@@ -31,11 +31,39 @@ export function AddToCartButton({
       }}
       className={`font-display font-bold uppercase tracking-[0.08em] transition ${
         out
-          ? "cursor-not-allowed bg-surface-2 text-muted-2"
-          : "bg-primary text-white hover:bg-primary-dark active:scale-[0.98]"
+          ? "cursor-not-allowed rounded-full bg-surface-2 text-muted-2"
+          : "btn-primary-pill btn-shine"
       } ${className}`}
     >
       {out ? "Out of Stock" : added ? "Added ✓" : label}
+    </button>
+  );
+}
+
+/** Circular "+" quick-add (hodl vcard footer action): one tap adds a
+ *  single unit without leaving the grid. */
+export function QuickAddButton({ product }: { product: CatalogProduct }) {
+  const { addToCart } = useShop();
+  const [added, setAdded] = useState(false);
+  const out = product.stock <= 0;
+  return (
+    <button
+      type="button"
+      disabled={out}
+      aria-label={out ? `${product.name} is out of stock` : `Quick add ${product.name} to cart`}
+      title={out ? "Out of stock" : "Quick add to cart"}
+      onClick={() => {
+        addToCart(product, 1);
+        setAdded(true);
+        setTimeout(() => setAdded(false), 1200);
+      }}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg font-bold transition ${
+        out
+          ? "cursor-not-allowed border border-line text-muted-2"
+          : "border border-primary/60 text-primary shadow-glow hover:bg-primary hover:text-white active:scale-95"
+      }`}
+    >
+      <span aria-hidden>{added ? "✓" : "+"}</span>
     </button>
   );
 }

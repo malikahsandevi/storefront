@@ -2,6 +2,12 @@ import Link from "next/link";
 import Year from "./Year";
 import { storeDisplayName, type CatalogCategory, type StoreConfig } from "@/lib/api";
 
+/**
+ * The hodl vault footer: quiet and structured — a brand column with
+ * the store's claim and its real trust ticks, menu columns, a contact
+ * column, and a bottom bar with the legal line and the payment
+ * methods the store actually takes (from config). No giant wordmark.
+ */
 export default function Footer({
   config,
   categories,
@@ -11,26 +17,32 @@ export default function Footer({
 }) {
   const name = storeDisplayName(config);
   const shopLinks = categories.filter((c) => !c.parent).slice(0, 6);
-  const headingCls = "text-[11px] font-bold uppercase tracking-[0.22em] text-muted-2";
+  const headingCls = "mono-label text-muted-2";
   const linkCls = "transition hover:text-primary";
+  const paymentNames = config.paymentMethods.map((m) => m.name).filter(Boolean);
 
   return (
-    <footer className="mt-24 border-t-2 border-cream/80 bg-ink-2">
-      <div className="mx-auto max-w-7xl px-4 pt-14 sm:px-6 lg:px-8">
-        <p
-          aria-hidden
-          className="select-none overflow-hidden whitespace-nowrap font-display text-[13.5vw] font-black uppercase leading-[0.85] tracking-tight text-surface-2 lg:text-[10.5rem]"
-        >
-          {name}
-        </p>
-
-        <div className="grid gap-10 border-t border-line py-12 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="mt-24 border-t border-line bg-ink-2">
+      <div className="mx-auto max-w-7xl px-4 pb-9 pt-[72px] sm:px-6 lg:px-8">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
             <p className="font-display text-xl font-black uppercase tracking-tight text-cream">{name}</p>
-            {config.tagline && <p className="mt-3 text-sm text-muted">{config.tagline}</p>}
+            {config.tagline && (
+              <p className="mt-3 max-w-[30ch] font-display text-[17px] font-semibold leading-snug text-cream">
+                {config.tagline}
+              </p>
+            )}
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-2">
               Quality products, honest prices and delivery you can track — shop with confidence.
             </p>
+            <ul className="mt-5 space-y-2 text-sm text-muted">
+              <li className="flex items-center gap-2">
+                <span aria-hidden className="font-bold text-primary">✓</span> Order tracking on every purchase
+              </li>
+              <li className="flex items-center gap-2">
+                <span aria-hidden className="font-bold text-primary">✓</span> Transparent pricing, confirmed at checkout
+              </li>
+            </ul>
           </div>
 
           <nav aria-label="Shop">
@@ -82,8 +94,13 @@ export default function Footer({
           </div>
         </div>
       </div>
-      <div className="border-t border-line py-5 text-center text-xs text-muted-2">
-        © <Year /> {name}. All rights reserved.
+      <div className="border-t border-line">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-muted-2 sm:px-6 lg:px-8">
+          <p>
+            © <Year /> {name}. All rights reserved.
+          </p>
+          {paymentNames.length > 0 && <p>Pay with {paymentNames.join(" · ")}</p>}
+        </div>
       </div>
     </footer>
   );

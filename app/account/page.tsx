@@ -7,8 +7,8 @@ import { apiCall, type CustomerAddress, type CustomerProfile } from "@/lib/api";
 import { useShop } from "@/lib/store";
 
 const inputCls =
-  "w-full border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-muted-2";
+  "w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mono-label mb-1.5 block text-muted-2";
 
 const emptyAddress: CustomerAddress = {
   street: "", city: "", state: "", zipCode: "", country: "Pakistan", isDefault: false,
@@ -74,10 +74,10 @@ export default function AccountPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">My Account</h1>
         <div className="flex gap-2">
-          <Link href="/account/orders" className="border border-line px-5 py-2 text-sm font-semibold text-muted transition hover:border-primary hover:text-cream">
+          <Link href="/account/orders" className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream">
             My Orders
           </Link>
-          <Link href="/wishlist" className="border border-line px-5 py-2 text-sm font-semibold text-muted transition hover:border-primary hover:text-cream">
+          <Link href="/wishlist" className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream">
             Wishlist
           </Link>
           <button
@@ -86,7 +86,7 @@ export default function AccountPage() {
               logout();
               router.push("/");
             }}
-            className="border border-line px-5 py-2 text-sm font-semibold text-muted transition hover:border-primary hover:text-cream"
+            className="btn-ghost-pill px-5 py-2 text-sm font-semibold text-muted hover:text-cream"
           >
             Sign Out
           </button>
@@ -102,8 +102,12 @@ export default function AccountPage() {
       {error && <p className="mt-4 text-sm text-primary" role="alert">{error}</p>}
 
       <form onSubmit={save} className="mt-6 space-y-6">
-        <section className="border border-line bg-surface p-6" aria-labelledby="profile-h">
-          <h2 id="profile-h" className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Profile</h2>
+        <section className="vault-panel p-6" aria-labelledby="profile-h">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="mono-label text-primary">01</span>
+            <span aria-hidden className="kicker-bar" />
+          </div>
+          <h2 id="profile-h" className="mt-2 font-display text-lg font-extrabold uppercase tracking-tight text-cream">Profile</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div>
               <label htmlFor="ac-first" className={labelCls}>First name</label>
@@ -120,13 +124,17 @@ export default function AccountPage() {
           </div>
         </section>
 
-        <section className="border border-line bg-surface p-6" aria-labelledby="addr-h">
-          <div className="flex items-center justify-between">
+        <section className="vault-panel p-6" aria-labelledby="addr-h">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="mono-label text-primary">02</span>
+            <span aria-hidden className="kicker-bar" />
+          </div>
+          <div className="mt-2 flex items-center justify-between">
             <h2 id="addr-h" className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Address Book</h2>
             <button
               type="button"
               onClick={() => setAddresses((prev) => [...prev, { ...emptyAddress }])}
-              className="border border-primary px-4 py-1.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
+              className="btn-ghost-pill px-4 py-1.5 text-sm font-semibold text-primary"
             >
               + Add Address
             </button>
@@ -136,7 +144,7 @@ export default function AccountPage() {
           )}
           <div className="mt-4 space-y-4">
             {addresses.map((address, i) => (
-              <fieldset key={i} className="border border-line bg-ink-2 p-5">
+              <fieldset key={i} className="rounded-2xl border border-line bg-ink-2 p-5">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="sm:col-span-2">
                     <label className={labelCls} htmlFor={`addr-${i}-street`}>Street address</label>
@@ -185,7 +193,7 @@ export default function AccountPage() {
         </section>
 
         {message && <p className="text-sm text-emerald-400" role="status">{message}</p>}
-        <button type="submit" disabled={saving} className="bg-primary px-9 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-60">
+        <button type="submit" disabled={saving} className="btn-primary-pill btn-shine px-9 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] disabled:opacity-60">
           {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>

@@ -29,20 +29,20 @@
   --shadow-glow: 0 14px 34px -12px var(--sf-glow);
 }
 
-/* Fallback paint (Ruby Red dark — the set this storefront shipped
-   with) so the first paint is correct even before the layout's
+/* Fallback paint (Sunset Orange dark — the set this storefront
+   ships with) so the first paint is correct even before the layout's
    theme <style> is read, and on pages rendered without it. The
    layout injection overrides every one of these. */
 :root {
-  --sf-primary: #e11d48;
-  --sf-text: #fff1f2;
-  --sf-bg: #180a11;
+  --sf-primary: #f97316;
+  --sf-text: #f3f4f6;
+  --sf-bg: #0b0f19;
   --sf-bg-2: color-mix(in srgb, var(--sf-bg) 93%, var(--sf-text));
   --sf-surface: color-mix(in srgb, var(--sf-bg) 89%, var(--sf-text));
   --sf-surface-2: color-mix(in srgb, var(--sf-bg) 82%, var(--sf-text));
   --sf-line: color-mix(in srgb, var(--sf-text) 17%, var(--sf-bg));
   --sf-primary-dark: color-mix(in srgb, var(--sf-primary) 74%, #000);
-  --sf-secondary: #fb7185;
+  --sf-secondary: #334155;
   --sf-muted: color-mix(in srgb, var(--sf-text) 72%, var(--sf-bg));
   --sf-muted-2: color-mix(in srgb, var(--sf-text) 50%, var(--sf-bg));
   --sf-glow: color-mix(in srgb, var(--sf-primary) 42%, transparent);
@@ -50,6 +50,148 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Page-level horizontal guard (backstop): clip, not hidden, so the
+   sticky header keeps working. Real offenders are fixed at their own
+   elements; this only catches strays. */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* The category-nav scroller keeps scrolling/swiping but paints no
+   scrollbar of its own (it was the visible bar under the nav). */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── hodl "vault" shared system ───────────────────────────────────
+   The design language as reusable classes; every colour still comes
+   from the admin-served --sf-* tokens. */
+
+/* Mono label: kickers, spec keys, counts (ui-monospace stack, exactly
+   as hodl fills its mono role). */
+.mono-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* The 32px gradient bar that follows a numbered kicker. */
+.kicker-bar {
+  display: inline-block;
+  width: 32px;
+  height: 2px;
+  flex: none;
+  background: linear-gradient(90deg, var(--sf-primary), transparent);
+}
+
+/* Vault panel: hairline border, surface-gradient fill, 24px radius. */
+.vault-panel {
+  border: 1px solid var(--sf-line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--sf-surface), var(--sf-surface-2));
+}
+
+/* Vault panels that are links/buttons tint to the accent on hover,
+   like the vcard (globals classes are unlayered, so the hover must
+   live here rather than in a Tailwind hover: utility). */
+a.vault-panel,
+button.vault-panel {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+a.vault-panel:hover,
+button.vault-panel:hover {
+  border-color: color-mix(in srgb, var(--sf-primary) 55%, var(--sf-line));
+  box-shadow: 0 40px 80px -40px var(--sf-glow);
+}
+
+/* The accent gradient (primary → secondary) as a background. */
+.grad-primary {
+  background-image: linear-gradient(110deg, var(--sf-primary), var(--sf-secondary));
+}
+
+/* Product card ("vcard"): vault panel that tints its border to the
+   accent and blooms a deep accent shadow on hover. */
+.vcard {
+  border: 1px solid var(--sf-line);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--sf-surface), var(--sf-surface-2));
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.vcard:hover {
+  border-color: color-mix(in srgb, var(--sf-primary) 55%, var(--sf-line));
+  box-shadow: 0 40px 80px -40px var(--sf-glow);
+}
+
+/* Radial accent glow behind card/gallery media. */
+.media-glow {
+  background: radial-gradient(
+    circle at 50% 55%,
+    color-mix(in srgb, var(--sf-primary) 18%, transparent),
+    transparent 68%
+  );
+}
+
+/* Pill buttons, hodl style. Primary: accent gradient + inset ring +
+   deep accent shadow. Ghost: inset hairline ring, accent tint on
+   hover. Pair primary with .btn-shine for the sweep. */
+.btn-primary-pill {
+  border-radius: 999px;
+  background-image: linear-gradient(110deg, var(--sf-primary), var(--sf-secondary));
+  color: #fff;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.12),
+    0 14px 34px -12px var(--sf-glow);
+  transition: filter 0.25s ease, transform 0.15s ease;
+}
+.btn-primary-pill:hover {
+  filter: brightness(1.07);
+}
+.btn-primary-pill:active {
+  transform: scale(0.98);
+}
+.btn-ghost-pill {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sf-text) 3%, transparent);
+  box-shadow: inset 0 0 0 1px var(--sf-line);
+  transition: background 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
+}
+.btn-ghost-pill:hover {
+  background: color-mix(in srgb, var(--sf-primary) 8%, transparent);
+  box-shadow: inset 0 0 0 1px var(--sf-primary);
+}
+
+/* Shine sweep for pill buttons: a white band crosses on hover. */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.35) 50%, transparent 60%);
+  transform: translateX(-120%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn-shine::after {
+    transition: transform 0.8s ease;
+  }
+  .btn-shine:hover::after {
+    transform: translateX(120%);
+  }
 }
 
 body {

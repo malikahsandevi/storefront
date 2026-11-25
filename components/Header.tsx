@@ -132,7 +132,7 @@ export default function Header({
 
         {/* Category nav */}
         <nav className="border-t border-line" aria-label="Categories">
-          <div className="mx-auto flex max-w-7xl items-center justify-start gap-7 overflow-x-auto px-4 py-3 sm:px-6 md:justify-center lg:px-8">
+          <div className="no-scrollbar mx-auto flex max-w-7xl items-center justify-start gap-7 overflow-x-auto px-4 py-3 sm:px-6 md:justify-center lg:px-8">
             <Link
               href="/shop"
               className="whitespace-nowrap text-[13px] font-bold uppercase tracking-[0.1em] text-cream underline-offset-4 transition hover:text-primary hover:underline"

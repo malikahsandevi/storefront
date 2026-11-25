@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
+import SectionHead from "@/components/SectionHead";
 import { fetchCategories, fetchProducts, fetchStoreConfig, formatMoney, storeDisplayName } from "@/lib/api";
 
 export default async function HomePage() {
@@ -19,26 +20,13 @@ export default async function HomePage() {
   const nextNo = () => String(++sectionNo).padStart(2, "0");
 
   const sectionHead = (id: string, title: string, href?: string) => (
-    <div data-reveal className="mb-9 flex items-end justify-between gap-4 border-t-2 border-cream/80 pt-5">
-      <div className="flex items-baseline gap-4">
-        <span aria-hidden className="font-display text-sm font-bold text-primary">{nextNo()}</span>
-        <h2 id={id} className="font-display text-3xl font-extrabold uppercase tracking-tight text-cream sm:text-4xl">{title}</h2>
-      </div>
-      {href && (
-        <Link
-          href={href}
-          className="shrink-0 text-sm font-semibold text-muted underline-offset-4 transition hover:text-primary hover:underline"
-        >
-          View all →
-        </Link>
-      )}
-    </div>
+    <SectionHead no={nextNo()} title={title} id={id} href={href} />
   );
 
   return (
     <div className="pb-6">
       {/* Hero — magazine cover: display type first, product as the plate. */}
-      <section className="pt-10 sm:pt-14">
+      <section className="pt-5 sm:pt-6">
         <div data-hero-fade className="flex items-center justify-between gap-4 border-t-2 border-cream/80 pt-4 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-2">
           <span>{config.tagline || name}</span>
           <span className="hidden sm:block">{name} — Online Store</span>
@@ -124,7 +112,7 @@ export default async function HomePage() {
                 key={category._id}
                 data-reveal
                 href={`/category/${category.slug}`}
-                className={`group relative block overflow-hidden bg-surface ${
+                className={`group relative block overflow-hidden rounded-[24px] border border-line bg-surface transition hover:border-primary/60 ${
                   i === 0 ? "col-span-2 row-span-2" : i === 3 ? "lg:col-span-2" : ""
                 }`}
               >
@@ -142,7 +130,11 @@ export default async function HomePage() {
                   </span>
                 )}
                 <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent" />
-                <span aria-hidden className="absolute left-4 top-4 font-display text-sm font-bold text-white/80">
+                <span
+                  aria-hidden
+                  className="absolute inset-0 bg-[radial-gradient(circle_at_85%_8%,color-mix(in_srgb,var(--sf-primary)_26%,transparent),transparent_55%)]"
+                />
+                <span aria-hidden className="mono-label absolute left-4 top-4 text-white/85">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="absolute inset-x-0 bottom-0 p-4">
@@ -163,7 +155,7 @@ export default async function HomePage() {
       {featured.products.length > 0 && (
         <section aria-labelledby="featured-heading" className="mt-24">
           {sectionHead("featured-heading", "Featured Products", "/shop")}
-          <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {featured.products.map((product) => (
               <ProductCard key={product._id} product={product} currency={currency} />
             ))}
@@ -171,8 +163,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Promo banner */}
-      <section data-reveal className="relative mt-24 overflow-hidden bg-primary px-6 py-14 sm:px-12">
+      {/* Promo banner — accent-gradient vault panel, shine-sweep CTA */}
+      <section data-reveal className="grad-primary relative mt-24 overflow-hidden rounded-[24px] px-6 py-14 shadow-glow sm:px-12">
         <span aria-hidden className="pointer-events-none absolute -right-6 -top-24 select-none font-display text-[13rem] font-black leading-none text-white/10">
           %
         </span>
@@ -183,7 +175,7 @@ export default async function HomePage() {
           </p>
           <Link
             href={audioCategory ? `/category/${audioCategory.slug}` : "/shop"}
-            className="mt-8 inline-block bg-ink px-9 py-4 font-display text-sm font-bold uppercase tracking-[0.1em] text-cream transition hover:bg-ink-2 active:scale-[0.98]"
+            className="btn-shine mt-8 inline-block rounded-full bg-ink px-9 py-4 font-display text-sm font-bold uppercase tracking-[0.1em] text-cream transition hover:bg-ink-2 active:scale-[0.98]"
           >
             Shop the Sale
           </Link>
@@ -194,7 +186,7 @@ export default async function HomePage() {
       {arrivals.products.length > 0 && (
         <section aria-labelledby="arrivals-heading" className="mt-24">
           {sectionHead("arrivals-heading", "New Arrivals", "/shop?sort=newest")}
-          <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {arrivals.products.map((product) => (
               <ProductCard key={product._id} product={product} currency={currency} />
             ))}

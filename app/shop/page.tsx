@@ -43,8 +43,14 @@ export default async function ShopPage({
 
   return (
     <div className="py-10">
-      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Catalog</p>
-      <h1 className="mb-10 mt-2 font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Shop</h1>
+      <div className="mb-10">
+        <div className="flex items-center gap-3">
+          <span aria-hidden className="mono-label text-primary">01</span>
+          <span className="mono-label text-muted-2">Catalog</span>
+          <span aria-hidden className="kicker-bar" />
+        </div>
+        <h1 className="mt-3 font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Shop</h1>
+      </div>
       <CatalogBrowser
         basePath="/shop"
         categories={categories}

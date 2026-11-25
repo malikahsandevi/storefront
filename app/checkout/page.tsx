@@ -15,8 +15,8 @@ import {
 import { useShop } from "@/lib/store";
 
 const inputCls =
-  "w-full border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-muted-2";
+  "w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mono-label mb-1.5 block text-muted-2";
 
 export default function CheckoutPage() {
   const { cart, user, clearCart, ready } = useShop();
@@ -126,7 +126,7 @@ export default function CheckoutPage() {
       <div className="py-16 text-center">
         <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">Checkout</h1>
         <p className="mt-3 text-muted">Your cart is empty — add something first.</p>
-        <Link href="/shop" className="mt-6 inline-block bg-primary px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark">
+        <Link href="/shop" className="btn-primary-pill btn-shine mt-6 inline-block px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
           Go to Shop
         </Link>
       </div>
@@ -142,21 +142,21 @@ export default function CheckoutPage() {
           Your order number is <span className="font-bold text-cream">{placed.orderNumber}</span>.
           Keep it safe — you can track your order any time with this number and your email.
         </p>
-        <dl className="mx-auto mt-6 max-w-sm space-y-1 border border-line bg-surface p-6 text-left text-sm">
+        <dl className="vault-panel mx-auto mt-6 max-w-sm space-y-1 p-6 text-left text-sm">
           <div className="flex justify-between"><dt className="text-muted">Total</dt><dd className="font-bold text-cream">{formatMoney(placed.total, currency)}</dd></div>
           <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{placed.paymentMethod} ({placed.paymentStatus})</dd></div>
           <div className="flex justify-between"><dt className="text-muted">Status</dt><dd className="text-cream">{placed.status}</dd></div>
         </dl>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/track-order" className="bg-primary px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark">
+          <Link href="/track-order" className="btn-primary-pill btn-shine px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em]">
             Track Order
           </Link>
           {user && (
-            <Link href="/account/orders" className="border border-line px-6 py-3 font-semibold text-muted transition hover:border-primary hover:text-cream">
+            <Link href="/account/orders" className="btn-ghost-pill px-6 py-3 font-semibold text-muted hover:text-cream">
               My Orders
             </Link>
           )}
-          <Link href="/shop" className="border border-line px-6 py-3 font-semibold text-muted transition hover:border-primary hover:text-cream">
+          <Link href="/shop" className="btn-ghost-pill px-6 py-3 font-semibold text-muted hover:text-cream">
             Continue Shopping
           </Link>
         </div>
@@ -194,8 +194,8 @@ export default function CheckoutPage() {
       <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Checkout</h1>
       <form onSubmit={placeOrder} className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
-          <section className="border border-line bg-surface p-6" aria-labelledby="contact-h">
-            <h2 id="contact-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center bg-primary font-display text-xs font-extrabold text-white">1</span>Contact</h2>
+          <section className="vault-panel p-6" aria-labelledby="contact-h">
+            <h2 id="contact-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">1</span>Contact</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="co-first" className={labelCls}>First name *</label>
@@ -242,8 +242,8 @@ export default function CheckoutPage() {
             )}
           </section>
 
-          <section className="border border-line bg-surface p-6" aria-labelledby="ship-h">
-            <h2 id="ship-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center bg-primary font-display text-xs font-extrabold text-white">2</span>Shipping Address</h2>
+          <section className="vault-panel p-6" aria-labelledby="ship-h">
+            <h2 id="ship-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">2</span>Shipping Address</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label htmlFor="co-street" className={labelCls}>Street address *</label>
@@ -269,8 +269,8 @@ export default function CheckoutPage() {
           </section>
 
           {shipping && shipping.configured && (
-            <section className="border border-line bg-surface p-6" aria-labelledby="delivery-h">
-              <h2 id="delivery-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center bg-primary font-display text-xs font-extrabold text-white">3</span>Delivery</h2>
+            <section className="vault-panel p-6" aria-labelledby="delivery-h">
+              <h2 id="delivery-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">3</span>Delivery</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="co-method" className={labelCls}>Shipping method</label>
@@ -294,11 +294,11 @@ export default function CheckoutPage() {
             </section>
           )}
 
-          <section className="border border-line bg-surface p-6" aria-labelledby="pay-h">
-            <h2 id="pay-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center bg-primary font-display text-xs font-extrabold text-white">4</span>Payment</h2>
+          <section className="vault-panel p-6" aria-labelledby="pay-h">
+            <h2 id="pay-h" className="flex items-center font-display text-lg font-extrabold uppercase tracking-tight text-cream"><span aria-hidden className="grad-primary mr-3 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-xs font-extrabold text-white">4</span>Payment</h2>
             <div className="mt-3 space-y-2">
               {(config?.paymentMethods.length ? config.paymentMethods : [{ name: "Cash on Delivery", description: "" }]).map((method) => (
-                <label key={method.name} className="flex cursor-pointer items-center gap-3 border border-line bg-ink-2 px-4 py-3.5 text-sm transition hover:border-primary/70 has-[:checked]:border-primary has-[:checked]:bg-primary/10">
+                <label key={method.name} className="flex cursor-pointer items-center gap-3 rounded-2xl border border-line bg-ink-2 px-4 py-3.5 text-sm transition hover:border-primary/70 has-[:checked]:border-primary has-[:checked]:bg-primary/10">
                   <input
                     type="radio"
                     name="payment"
@@ -320,7 +320,7 @@ export default function CheckoutPage() {
           </section>
         </div>
 
-        <aside className="h-fit border border-line bg-surface p-6 lg:sticky lg:top-40">
+        <aside className="vault-panel h-fit p-6 lg:sticky lg:top-40">
           <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Order Summary</h2>
           <ul className="mt-3 space-y-2 text-sm">
             {cart.map((line) => (
@@ -363,7 +363,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={placing || !quote}
-            className="mt-5 w-full bg-primary py-4 font-display text-sm font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.99] disabled:opacity-60"
+            className="btn-primary-pill btn-shine mt-5 w-full py-4 font-display text-sm font-bold uppercase tracking-[0.1em] disabled:opacity-60"
           >
             {placing ? "Placing order…" : "Place Order"}
           </button>
