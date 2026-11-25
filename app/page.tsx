@@ -24,11 +24,11 @@ import {
  * Home, composed section-for-section like the reference store's
  * home: hero (badge pill, stacked display lines with the last in
  * the gradient, lead, pill CTAs, fact chips, and the dial-and-core
- * product visual) → facts ticker → promo banner → 01 Product
- * Finder → 02 the three-link chain → 03 featured products →
- * 04 category bento → 05 new arrivals → 06 verify ledger →
- * 07 help band → 08 FAQ → the closing rings CTA. All content is
- * this store's own: config, catalog, prices.
+ * product visual) → facts ticker → promo banner → 01 new
+ * arrivals → 02 category bento → 03 featured products →
+ * 04 Product Finder → 05 the three-link chain → 06 verify
+ * ledger → 07 help band → 08 FAQ → the closing rings CTA.
+ * All content is this store's own: config, catalog, prices.
  */
 export default async function HomePage() {
   const [config, categories, featured, arrivals, finderPool] = await Promise.all([
@@ -173,82 +173,33 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 01 Product Finder ────────────────────────────────── */}
-      <section className="sec sec--line" aria-label="Product finder">
-        <div className="wrap find__grid">
-          <div className="find__intro">
-            <SectionHead
-              no={no()}
-              label="Product Finder"
-              title={
-                <>
-                  Three questions. <strong>One clear recommendation.</strong>
-                </>
-              }
-              lead="You do not need to be a tech expert. Answer three short questions and see which product from the live catalog fits — including its real price and stock."
-            />
-            <ul className="find__points">
-              <li>
-                <IconCheck /> Takes about 30 seconds
-              </li>
-              <li>
-                <IconCheck /> No sign-up, and nothing is stored
-              </li>
-              <li>
-                <IconCheck /> Prefer a human? The store answers directly — see the help section
-                below
-              </li>
-            </ul>
-          </div>
-          <div data-reveal>
-            <Finder products={finderPool.products} categories={categories} currency={currency} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── 02 How ordering works ────────────────────────────── */}
-      <StepsSection no={no()} images={stepImages} />
-
-      {/* ── 03 Featured products ─────────────────────────────── */}
-      {featured.products.length > 0 && (
-        <section className="sec sec--line" aria-labelledby="featured-heading">
+      {/* ── 01 New arrivals ──────────────────────────────────── */}
+      {arrivals.products.length > 0 && (
+        <section className="sec sec--line" aria-labelledby="arrivals-heading">
           <div className="wrap">
             <SectionHead
               no={no()}
-              label="Featured Products"
+              label="New Arrivals"
               title={
                 <>
-                  Featured <strong>products.</strong>
+                  New <strong>arrivals.</strong>
                 </>
               }
-              lead="Hand-picked from the live catalog — the same prices and stock you will see at checkout."
-              id="featured-heading"
-              href="/shop"
+              lead="The latest products added to the catalog."
+              id="arrivals-heading"
+              href="/shop?sort=newest"
               split
             />
             <div className="pgrid">
-              {featured.products.map((product) => (
+              {arrivals.products.map((product) => (
                 <ProductCard key={product._id} product={product} currency={currency} />
               ))}
             </div>
-            <ul className="mt-12 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted">
-              <li className="flex items-center gap-2">
-                <IconCheck className="h-4 w-4 text-primary" /> Order tracking on every purchase
-              </li>
-              <li className="flex items-center gap-2">
-                <IconCheck className="h-4 w-4 text-primary" /> Transparent pricing, confirmed at
-                checkout
-              </li>
-              <li className="flex items-center gap-2">
-                <IconCheck className="h-4 w-4 text-primary" /> Real stock counts, straight from
-                the store
-              </li>
-            </ul>
           </div>
         </section>
       )}
 
-      {/* ── 04 Categories bento ──────────────────────────────── */}
+      {/* ── 02 Categories bento ──────────────────────────────── */}
       {tiles.length > 0 && (
         <section id="categories" className="sec sec--flat sec--line scroll-mt-28" aria-labelledby="categories-heading">
           <div className="wrap">
@@ -290,31 +241,80 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 05 New arrivals ──────────────────────────────────── */}
-      {arrivals.products.length > 0 && (
-        <section className="sec sec--line" aria-labelledby="arrivals-heading">
+      {/* ── 03 Featured products ─────────────────────────────── */}
+      {featured.products.length > 0 && (
+        <section className="sec sec--line" aria-labelledby="featured-heading">
           <div className="wrap">
             <SectionHead
               no={no()}
-              label="New Arrivals"
+              label="Featured Products"
               title={
                 <>
-                  New <strong>arrivals.</strong>
+                  Featured <strong>products.</strong>
                 </>
               }
-              lead="The latest products added to the catalog."
-              id="arrivals-heading"
-              href="/shop?sort=newest"
+              lead="Hand-picked from the live catalog — the same prices and stock you will see at checkout."
+              id="featured-heading"
+              href="/shop"
               split
             />
             <div className="pgrid">
-              {arrivals.products.map((product) => (
+              {featured.products.map((product) => (
                 <ProductCard key={product._id} product={product} currency={currency} />
               ))}
             </div>
+            <ul className="mt-12 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted">
+              <li className="flex items-center gap-2">
+                <IconCheck className="h-4 w-4 text-primary" /> Order tracking on every purchase
+              </li>
+              <li className="flex items-center gap-2">
+                <IconCheck className="h-4 w-4 text-primary" /> Transparent pricing, confirmed at
+                checkout
+              </li>
+              <li className="flex items-center gap-2">
+                <IconCheck className="h-4 w-4 text-primary" /> Real stock counts, straight from
+                the store
+              </li>
+            </ul>
           </div>
         </section>
       )}
+
+      {/* ── 04 Product Finder ────────────────────────────────── */}
+      <section className="sec sec--line" aria-label="Product finder">
+        <div className="wrap find__grid">
+          <div className="find__intro">
+            <SectionHead
+              no={no()}
+              label="Product Finder"
+              title={
+                <>
+                  Three questions. <strong>One clear recommendation.</strong>
+                </>
+              }
+              lead="You do not need to be a tech expert. Answer three short questions and see which product from the live catalog fits — including its real price and stock."
+            />
+            <ul className="find__points">
+              <li>
+                <IconCheck /> Takes about 30 seconds
+              </li>
+              <li>
+                <IconCheck /> No sign-up, and nothing is stored
+              </li>
+              <li>
+                <IconCheck /> Prefer a human? The store answers directly — see the help section
+                below
+              </li>
+            </ul>
+          </div>
+          <div data-reveal>
+            <Finder products={finderPool.products} categories={categories} currency={currency} />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 05 How ordering works ────────────────────────────── */}
+      <StepsSection no={no()} images={stepImages} />
 
       {featured.products.length === 0 && arrivals.products.length === 0 && (
         <section className="sec">
