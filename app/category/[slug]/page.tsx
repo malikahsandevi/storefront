@@ -68,8 +68,8 @@ export default async function CategoryPage({
 
   return (
     <div className="py-10">
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Category</p>
-      <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-cream sm:text-5xl">{category.name}</h1>
+      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">Category</p>
+      <h1 className="mt-2 font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">{category.name}</h1>
       {category.description && <p className="mt-3 max-w-2xl leading-relaxed text-muted">{category.description}</p>}
       <div className="mt-8">
         <CatalogBrowser

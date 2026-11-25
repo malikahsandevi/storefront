@@ -12,6 +12,25 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3100"
 ).replace(/\/+$/, "");
 
+export interface PaletteColors {
+  primary: string;
+  secondary: string;
+  text: string;
+  background: string;
+}
+
+/** The theme the admin keeps (Settings → Appearance), served by the
+ *  public config: the palette id, the resolved mode, and the palette's
+ *  own colour values. The storefront's CSS variables are driven by
+ *  these values — the frontend keeps no colour copy of its own. */
+export interface StoreAppearance {
+  palette: string;
+  mode: "dark" | "light" | "system";
+  colors: PaletteColors;
+  colorsDark: PaletteColors;
+  colorsLight: PaletteColors;
+}
+
 export interface StoreConfig {
   storeName: string;
   tagline: string;
@@ -22,6 +41,7 @@ export interface StoreConfig {
   contactEmail: string;
   phone: string;
   paymentMethods: { name: string; description: string }[];
+  appearance: StoreAppearance;
 }
 
 export interface ProductImage {
@@ -162,6 +182,16 @@ export interface MyOrder {
   shipment: TrackedOrder["shipment"];
 }
 
+/** Brand-neutral fallback theme (the Ruby Red dark set the storefront
+ *  shipped with) — used only when the config cannot be reached. */
+export const FALLBACK_APPEARANCE: StoreAppearance = {
+  palette: "ruby-red",
+  mode: "dark",
+  colors: { primary: "#e11d48", secondary: "#fb7185", text: "#fff1f2", background: "#180a11" },
+  colorsDark: { primary: "#e11d48", secondary: "#fb7185", text: "#fff1f2", background: "#180a11" },
+  colorsLight: { primary: "#e11d48", secondary: "#be123c", text: "#4c0519", background: "#ffffff" },
+};
+
 export const FALLBACK_CONFIG: StoreConfig = {
   storeName: "",
   tagline: "",
@@ -172,6 +202,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   contactEmail: "",
   phone: "",
   paymentMethods: [],
+  appearance: FALLBACK_APPEARANCE,
 };
 
 /** The store's display name: the admin panel's value wins; the env
@@ -205,7 +236,8 @@ async function serverGet<T>(path: string): Promise<T> {
 
 export async function fetchStoreConfig(): Promise<StoreConfig> {
   try {
-    return await serverGet<StoreConfig>("/api/storefront/config");
+    const config = await serverGet<StoreConfig>("/api/storefront/config");
+    return { ...config, appearance: config.appearance || FALLBACK_APPEARANCE };
   } catch {
     return FALLBACK_CONFIG;
   }

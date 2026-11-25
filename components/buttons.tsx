@@ -29,10 +29,10 @@ export function AddToCartButton({
         setAdded(true);
         setTimeout(() => setAdded(false), 1500);
       }}
-      className={`rounded-full font-semibold transition ${
+      className={`font-display font-bold uppercase tracking-[0.08em] transition ${
         out
           ? "cursor-not-allowed bg-surface-2 text-muted-2"
-          : "bg-primary text-white shadow-glow hover:bg-primary-dark active:scale-[0.98]"
+          : "bg-primary text-white hover:bg-primary-dark active:scale-[0.98]"
       } ${className}`}
     >
       {out ? "Out of Stock" : added ? "Added ✓" : label}
@@ -51,8 +51,8 @@ export function WishlistButton({ product, className = "" }: { product: CatalogPr
       aria-pressed={active}
       className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition ${
         active
-          ? "border-primary bg-primary text-white shadow-glow"
-          : "border-line/60 bg-ink/50 text-muted hover:border-primary hover:text-cream"
+          ? "border-primary bg-primary text-white"
+          : "border-line bg-ink/50 text-muted hover:border-primary hover:text-cream"
       } ${className}`}
     >
       <span aria-hidden>{active ? "♥" : "♡"}</span>

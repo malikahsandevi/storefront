@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Archivo, Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Motion from "@/components/Motion";
 import { ShopProvider } from "@/lib/store";
+import { themeCss, themeMode } from "@/lib/theme";
 import {
   SITE_URL,
   fetchCategories,
@@ -48,18 +50,33 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  weight: ["500", "600", "700", "800", "900"],
+  display: "swap",
+});
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [config, categories] = await Promise.all([fetchStoreConfig(), fetchCategories()]);
   const name = storeDisplayName(config);
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable}`}>
+    <html
+      lang="en"
+      data-mode={themeMode(config.appearance)}
+      className={`h-full antialiased ${inter.variable} ${archivo.variable}`}
+    >
+      <head>
+        {/* The admin-kept theme, as CSS variables (see lib/theme.ts). */}
+        <style dangerouslySetInnerHTML={{ __html: themeCss(config.appearance) }} />
+      </head>
       <body className="flex min-h-full flex-col bg-ink font-sans text-cream">
         <ShopProvider>
-          <Header storeName={name} logo={config.logo} categories={categories} />
+          <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} />
           <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8">{children}</main>
           <Footer config={config} categories={categories} />
         </ShopProvider>
+        <Motion />
       </body>
     </html>
   );

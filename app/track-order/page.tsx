@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { apiCall, formatMoney, type TrackedOrder } from "@/lib/api";
 
 const inputCls =
-  "w-full rounded-xl border border-line/80 bg-ink-2/80 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-2";
+  "w-full border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-muted-2";
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState("");
@@ -41,11 +41,11 @@ export default function TrackOrderPage() {
 
   return (
     <div className="mx-auto max-w-2xl py-10">
-      <h1 className="text-4xl font-extrabold tracking-tight text-cream">Track Your Order</h1>
-      <p className="mt-2 text-muted">
+      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Track Your Order</h1>
+      <p className="mt-3 text-muted">
         Enter the order number from your confirmation and the email you ordered with — no account needed.
       </p>
-      <form onSubmit={submit} className="mt-6 grid gap-4 rounded-3xl border border-line/70 bg-surface p-6 sm:grid-cols-2">
+      <form onSubmit={submit} className="mt-8 grid gap-4 border border-line bg-surface p-6 sm:grid-cols-2">
         <div>
           <label htmlFor="to-number" className={labelCls}>Order number *</label>
           <input id="to-number" required value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} placeholder="ORD-260124-1234" className={inputCls} />
@@ -54,17 +54,17 @@ export default function TrackOrderPage() {
           <label htmlFor="to-email" className={labelCls}>Email *</label>
           <input id="to-email" required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputCls} />
         </div>
-        <button type="submit" disabled={busy} className="rounded-full bg-primary px-8 py-3 font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-60 sm:col-span-2 sm:w-fit">
+        <button type="submit" disabled={busy} className="bg-primary px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.98] disabled:opacity-60 sm:col-span-2 sm:w-fit">
           {busy ? "Looking up…" : "Track Order"}
         </button>
       </form>
       {error && <p className="mt-4 text-sm text-primary" role="alert">{error}</p>}
 
       {order && (
-        <section className="mt-6 rounded-3xl border border-line/70 bg-surface p-6" aria-live="polite">
+        <section className="mt-6 border border-line bg-surface p-6" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-bold text-cream">{order.orderNumber}</h2>
-            <span className="rounded-full bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-glow">
+            <h2 className="font-display font-bold text-cream">{order.orderNumber}</h2>
+            <span className="bg-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-white">
               {order.status}
             </span>
           </div>
@@ -92,7 +92,7 @@ export default function TrackOrderPage() {
           </dl>
 
           {(order.shipment.trackingNumber || order.shipment.shippedAt) && (
-            <div className="mt-4 rounded-2xl bg-ink-2/80 p-5 text-sm">
+            <div className="mt-4 bg-ink-2 p-5 text-sm">
               <p className="font-semibold text-cream">Shipment</p>
               {order.shipment.courierName && <p className="mt-1 text-muted">Courier: {order.shipment.courierName}</p>}
               {order.shipment.trackingNumber && <p className="text-muted">Tracking number: {order.shipment.trackingNumber}</p>}

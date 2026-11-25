@@ -6,8 +6,8 @@ import { useState } from "react";
 import { useShop } from "@/lib/store";
 
 const inputCls =
-  "w-full rounded-xl border border-line/80 bg-ink-2/80 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
-const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-2";
+  "w-full border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2";
+const labelCls = "mb-1.5 block text-[11px] font-bold uppercase tracking-[0.18em] text-muted-2";
 
 export default function RegisterPage() {
   const { register } = useShop();
@@ -21,12 +21,12 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-md py-12">
-      <h1 className="text-4xl font-extrabold tracking-tight text-cream">Create Account</h1>
+      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream">Create Account</h1>
       <p className="mt-2 text-sm text-muted">
         Already have an account? <Link href="/login" className="font-semibold text-primary hover:text-cream">Sign in</Link>
       </p>
       <form
-        className="mt-6 space-y-4 rounded-3xl border border-line/70 bg-surface p-7 sm:p-8"
+        className="mt-6 space-y-4 border border-line bg-surface p-7 sm:p-8"
         onSubmit={async (e) => {
           e.preventDefault();
           setBusy(true);
@@ -61,7 +61,7 @@ export default function RegisterPage() {
           <p className="mt-1 text-xs text-muted-2">At least 6 characters.</p>
         </div>
         {error && <p className="text-sm text-primary" role="alert">{error}</p>}
-        <button type="submit" disabled={busy} className="w-full rounded-full bg-primary py-3 font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.99] disabled:opacity-60">
+        <button type="submit" disabled={busy} className="w-full bg-primary py-3.5 font-display text-sm font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.99] disabled:opacity-60">
           {busy ? "Creating account…" : "Create Account"}
         </button>
       </form>

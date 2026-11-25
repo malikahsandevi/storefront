@@ -51,9 +51,9 @@ export default function CartPage() {
   if (cart.length === 0) {
     return (
       <div className="py-16 text-center">
-        <h1 className="text-4xl font-extrabold tracking-tight text-cream">Your Cart</h1>
+        <h1 className="font-display text-4xl font-black uppercase tracking-tight text-cream">Your Cart</h1>
         <p className="mt-3 text-muted">Your cart is empty.</p>
-        <Link href="/shop" className="mt-6 inline-block rounded-full bg-primary px-8 py-3 font-bold text-white shadow-glow transition hover:bg-primary-dark">
+        <Link href="/shop" className="mt-6 inline-block bg-primary px-8 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark">
           Start Shopping
         </Link>
       </div>
@@ -62,12 +62,12 @@ export default function CartPage() {
 
   return (
     <div className="py-8">
-      <h1 className="text-4xl font-extrabold tracking-tight text-cream">Your Cart</h1>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
+      <h1 className="font-display text-5xl font-black uppercase tracking-tight text-cream sm:text-6xl">Your Cart</h1>
+      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <ul className="space-y-4">
           {cart.map((line) => (
-            <li key={`${line.productId}-${line.variant || ""}`} className="flex gap-4 rounded-3xl border border-line/70 bg-surface p-5">
-              <Link href={`/product/${line.slug}`} className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-ink-2">
+            <li key={`${line.productId}-${line.variant || ""}`} className="flex gap-4 border border-line bg-surface p-5">
+              <Link href={`/product/${line.slug}`} className="h-28 w-28 shrink-0 overflow-hidden bg-ink-2">
                 {line.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={line.image} alt={line.name} loading="lazy" className="h-full w-full object-cover" />
@@ -84,7 +84,7 @@ export default function CartPage() {
                 {line.variant && <p className="text-xs text-muted">{line.variant}</p>}
                 <p className="mt-0.5 text-sm text-muted">{formatMoney(line.price, currency)} each</p>
                 <div className="mt-auto flex items-center justify-between pt-2">
-                  <div className="flex items-center rounded-full border border-line/80 bg-surface">
+                  <div className="flex items-center border border-line bg-surface">
                     <button type="button" aria-label="Decrease quantity" onClick={() => updateQty(line.productId, line.variant, line.quantity - 1)} className="px-3 py-1.5 text-lg text-muted transition hover:text-cream">−</button>
                     <span className="min-w-7 text-center text-sm font-semibold">{line.quantity}</span>
                     <button type="button" aria-label="Increase quantity" onClick={() => updateQty(line.productId, line.variant, line.quantity + 1)} className="px-3 py-1.5 text-lg text-muted transition hover:text-cream">+</button>
@@ -99,8 +99,8 @@ export default function CartPage() {
           ))}
         </ul>
 
-        <aside className="h-fit rounded-3xl border border-line/70 bg-surface p-6 lg:sticky lg:top-32">
-          <h2 className="text-lg font-extrabold tracking-tight text-cream">Order Summary</h2>
+        <aside className="h-fit border border-line bg-surface p-6 lg:sticky lg:top-40">
+          <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-cream">Order Summary</h2>
           <form
             className="mt-4 flex gap-2"
             onSubmit={(e) => {
@@ -113,9 +113,9 @@ export default function CartPage() {
               onChange={(e) => setCouponCode(e.target.value)}
               placeholder="Coupon code"
               aria-label="Coupon code"
-              className="min-w-0 flex-1 rounded-xl border border-line/80 bg-ink-2/80 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2"
+              className="min-w-0 flex-1 border border-line bg-ink-2 px-3.5 py-2.5 text-sm text-cream placeholder:text-muted-2"
             />
-            <button type="submit" disabled={busy} className="rounded-full border border-primary px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white disabled:opacity-60">
+            <button type="submit" disabled={busy} className="border border-primary px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white disabled:opacity-60">
               {busy ? "…" : "Apply"}
             </button>
           </form>
@@ -140,7 +140,7 @@ export default function CartPage() {
               <dd className="font-extrabold text-cream">{formatMoney(total, currency)}</dd>
             </div>
           </dl>
-          <Link href="/checkout" className="mt-5 block rounded-full bg-primary py-3.5 text-center text-base font-bold text-white shadow-glow transition hover:bg-primary-dark active:scale-[0.99]">
+          <Link href="/checkout" className="mt-5 block bg-primary py-4 text-center font-display text-sm font-bold uppercase tracking-[0.1em] text-white transition hover:bg-primary-dark active:scale-[0.99]">
             Proceed to Checkout
           </Link>
           <Link href="/shop" className="mt-3 block text-center text-sm text-muted transition hover:text-cream">
