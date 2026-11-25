@@ -6,30 +6,24 @@ import { Fragment, useEffect, useState } from "react";
 import { formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
-import { IconArrow, IconBag, IconBox, IconHeart, IconMail, IconPhone, IconSearch, IconUser } from "./icons";
+import { IconArrow, IconBag, IconHeart, IconSearch, IconUser } from "./icons";
 
 /**
- * The reference store's header, rebuilt with our data:
- *  - a 34px status rail (pulsing dot + store line left, contact
- *    right, gradient hairline under it) that scrolls away;
- *  - ONE sticky glass bar (76px): wordmark left, the category
- *    navigation inside a centred PILL, and on the right a search
- *    pill (with the ⌘K chip), a gradient CTA, and circular icon
- *    actions with count bubbles. The cart icon opens the cart
- *    drawer; search opens a glass panel under the bar; on small
- *    screens a burger opens the numbered link panel.
+ * The store's header: ONE sticky glass bar (76px) — wordmark
+ * left, the category navigation inside a PILL that grows to fill
+ * the bar, and on the right a search pill (with the ⌘K chip) and
+ * circular icon actions with count bubbles. The cart icon opens
+ * the cart drawer; search opens a glass panel under the bar; on
+ * small screens a burger opens the numbered link panel.
  * All destinations, the search submit and the badges are the
  * store's own wiring. ALL top-level categories stay in the nav.
  */
 export default function Header({
   storeName,
   logo,
-  tagline,
   categories,
   featured,
   currency,
-  contactEmail,
-  phone,
 }: {
   storeName: string;
   logo: string;
@@ -100,7 +94,6 @@ export default function Header({
     );
 
   const tailLinks: { href: string; label: string }[] = [
-    { href: "/track-order", label: "Track Order" },
     { href: "/wishlist", label: "Wishlist" },
     { href: user ? "/account" : "/login", label: user ? "My Account" : "Sign In" },
   ];
@@ -144,31 +137,6 @@ export default function Header({
 
   return (
     <div className="hdr">
-      {/* Status rail */}
-      <div className="hdr__rail">
-        <div className="hwrap hdr__rail-in">
-          <p className="hdr__rail-status">
-            <span className="dot" aria-hidden />
-            <span>{tagline || storeName}</span>
-          </p>
-          <p className="hdr__rail-contact">
-            <Link href="/track-order">
-              <IconBox /> Track Order
-            </Link>
-            {contactEmail && (
-              <a href={`mailto:${contactEmail}`}>
-                <IconMail /> {contactEmail}
-              </a>
-            )}
-            {phone && (
-              <a href={`tel:${phone.replace(/\s+/g, "")}`}>
-                <IconPhone /> {phone}
-              </a>
-            )}
-          </p>
-        </div>
-      </div>
-
       {/* Main bar — leaving the bar (nav + any open panel together)
           shuts the hover mega panel. */}
       <header className="hdr__bar" onMouseLeave={() => setMega(null)}>
@@ -239,27 +207,12 @@ export default function Header({
               <span className="hdr__search-label">Search</span>
               <span className="hdr__kbd" aria-hidden>⌘K</span>
             </button>
-            <Link href="/shop" className="btn btn--primary hdr__cta">
-              Shop Now <IconArrow className="arr h-4 w-4" />
-            </Link>
-            <Link
-              href="/track-order"
-              className="hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-medium uppercase tracking-[0.09em] text-cream/75 transition hover:text-cream xl:flex"
-            >
-              Track Order
-            </Link>
             <Link href="/wishlist" className="hdr__icon" aria-label="Wishlist">
               <IconHeart />
               {wishlist.length > 0 && <span className="hdr__bubble">{wishlist.length}</span>}
             </Link>
             <Link href={user ? "/account" : "/login"} className="hdr__icon" aria-label={user ? "My account" : "Sign in"}>
               <IconUser />
-            </Link>
-            <Link
-              href={user ? "/account" : "/login"}
-              className="ml-1 hidden h-10 items-center whitespace-nowrap px-2 font-display text-[13px] font-semibold uppercase tracking-[0.09em] text-cream transition hover:text-primary sm:flex"
-            >
-              {user ? user.firstName || "Account" : "Sign In"}
             </Link>
             <button type="button" className="hdr__icon" aria-label="Cart" onClick={() => setCartOpen(true)}>
               <IconBag />

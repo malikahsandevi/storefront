@@ -2232,86 +2232,8 @@ a.tick__fact:hover {
 /* ── Header ────────────────────────────────────────────────────── */
 .hdr {
   position: sticky;
-  top: -34px;
+  top: 0;
   z-index: 90;
-}
-.hdr__rail {
-  height: 34px;
-  background: var(--sf-bg-2);
-  border-bottom: 1px solid var(--sf-line);
-  font-size: 12.5px;
-  letter-spacing: 0.02em;
-  color: var(--sf-muted);
-  position: relative;
-  overflow: hidden;
-}
-.hdr__rail::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--sf-primary) 55%, transparent),
-    color-mix(in srgb, var(--sf-secondary) 40%, transparent),
-    transparent
-  );
-  opacity: 0.7;
-}
-.hdr__rail-in {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-}
-.hdr__rail-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  flex: 1;
-}
-.hdr__rail-status span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hdr__rail-contact {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: none;
-}
-.hdr__rail-contact a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--sf-muted);
-  transition: color 0.2s ease;
-}
-.hdr__rail-contact a:hover {
-  color: var(--sf-text);
-}
-.hdr__rail-contact svg {
-  width: 14px;
-  height: 14px;
-  color: var(--sf-primary);
-}
-.hdr__rail-contact a + a::before {
-  content: "";
-  width: 1px;
-  height: 12px;
-  background: var(--line-2);
-  margin-right: 10px;
-}
-@media (max-width: 899px) {
-  .hdr__rail-contact {
-    display: none;
-  }
 }
 .hdr__bar {
   position: relative;
@@ -2486,17 +2408,6 @@ a.tick__fact:hover {
   }
   .hdr__search {
     padding: 0 11px;
-  }
-}
-.hdr__cta {
-  height: 40px;
-  padding: 0 16px 0 18px;
-  min-height: 40px;
-  font-size: 13px;
-}
-@media (max-width: 1599px) {
-  .hdr__cta {
-    display: none;
   }
 }
 .hdr__icon {
