@@ -182,14 +182,15 @@ export interface MyOrder {
   shipment: TrackedOrder["shipment"];
 }
 
-/** Brand-neutral fallback theme (the Ruby Red dark set the storefront
- *  shipped with) — used only when the config cannot be reached. */
+/** Brand-neutral fallback theme (the Sunset Orange set — the
+ *  palette the store ships with) — used only when the config cannot
+ *  be reached. */
 export const FALLBACK_APPEARANCE: StoreAppearance = {
-  palette: "ruby-red",
+  palette: "sunset-orange",
   mode: "dark",
-  colors: { primary: "#e11d48", secondary: "#fb7185", text: "#fff1f2", background: "#180a11" },
-  colorsDark: { primary: "#e11d48", secondary: "#fb7185", text: "#fff1f2", background: "#180a11" },
-  colorsLight: { primary: "#e11d48", secondary: "#be123c", text: "#4c0519", background: "#ffffff" },
+  colors: { primary: "#f97316", secondary: "#334155", text: "#f3f4f6", background: "#0b0f19" },
+  colorsDark: { primary: "#f97316", secondary: "#334155", text: "#f3f4f6", background: "#0b0f19" },
+  colorsLight: { primary: "#f97316", secondary: "#334155", text: "#111827", background: "#ffffff" },
 };
 
 export const FALLBACK_CONFIG: StoreConfig = {
