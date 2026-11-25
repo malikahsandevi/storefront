@@ -13,6 +13,7 @@ import {
   type StoreConfig,
 } from "@/lib/api";
 import { useShop } from "@/lib/store";
+import CustomSelect from "@/components/CustomSelect";
 
 /**
  * Checkout. PRESENTATION ONLY in this rebuild — every state,
@@ -234,12 +235,19 @@ export default function CheckoutPage() {
             {profile && profile.addresses.length > 0 && (
               <div className="mt-4">
                 <label htmlFor="co-saved" className="flabel">Saved addresses</label>
-                <select
+                <CustomSelect
                   id="co-saved"
-                  className="input"
                   defaultValue=""
-                  onChange={(e) => {
-                    const address = profile.addresses[Number(e.target.value)];
+                  ariaLabel="Saved addresses"
+                  options={[
+                    { value: "", label: "Choose a saved address…" },
+                    ...profile.addresses.map((address, i) => ({
+                      value: String(i),
+                      label: `${address.street}, ${address.city}`,
+                    })),
+                  ]}
+                  onChange={(v) => {
+                    const address = profile.addresses[Number(v)];
                     if (!address) return;
                     setStreet(address.street);
                     setCity(address.city);
@@ -247,14 +255,7 @@ export default function CheckoutPage() {
                     setZipCode(address.zipCode);
                     setCountry(address.country);
                   }}
-                >
-                  <option value="">Choose a saved address…</option>
-                  {profile.addresses.map((address, i) => (
-                    <option key={i} value={i}>
-                      {address.street}, {address.city}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             )}
           </section>
@@ -295,21 +296,26 @@ export default function CheckoutPage() {
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="co-method" className="flabel">Shipping method</label>
-                  <select id="co-method" value={methodId} onChange={(e) => setMethodId(e.target.value)} className="input">
-                    {shipping.methods.map((method) => (
-                      <option key={method.id} value={method.id}>
-                        {method.name} — {method.freeAbove ? `free over ${formatMoney(method.freeAbove, currency)}, else ` : ""}{formatMoney(method.charge, currency)}{method.estimatedDays ? ` · ${method.estimatedDays}` : ""}
-                      </option>
-                    ))}
-                  </select>
+                  <CustomSelect
+                    id="co-method"
+                    value={methodId}
+                    onChange={(v) => setMethodId(v)}
+                    ariaLabel="Shipping method"
+                    options={shipping.methods.map((method) => ({
+                      value: method.id,
+                      label: `${method.name} — ${method.freeAbove ? `free over ${formatMoney(method.freeAbove, currency)}, else ` : ""}${formatMoney(method.charge, currency)}${method.estimatedDays ? ` · ${method.estimatedDays}` : ""}`,
+                    }))}
+                  />
                 </div>
                 <div>
                   <label htmlFor="co-option" className="flabel">Delivery option</label>
-                  <select id="co-option" value={optionId} onChange={(e) => setOptionId(e.target.value)} className="input">
-                    {shipping.deliveryOptions.map((option) => (
-                      <option key={option.id} value={option.id}>{option.name}</option>
-                    ))}
-                  </select>
+                  <CustomSelect
+                    id="co-option"
+                    value={optionId}
+                    onChange={(v) => setOptionId(v)}
+                    ariaLabel="Delivery option"
+                    options={shipping.deliveryOptions.map((option) => ({ value: option.id, label: option.name }))}
+                  />
                 </div>
               </div>
             </section>
@@ -328,7 +334,7 @@ export default function CheckoutPage() {
                     value={method.name}
                     checked={paymentMethod === method.name}
                     onChange={() => setPaymentMethod(method.name)}
-                    className="accent-[var(--sf-primary)]"
+                    className="rdo"
                   />
                   <span>
                     <span className="font-semibold text-cream">{method.name}</span>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CustomSelect from "./CustomSelect";
 import ProductCard from "./ProductCard";
 import type { CatalogCategory, CatalogProduct } from "@/lib/api";
 
@@ -75,12 +76,16 @@ export default function CatalogBrowser({
         {!lockedCategory && (
           <div>
             <label htmlFor="f-cat" className="flabel">Category</label>
-            <select id="f-cat" name="category" defaultValue={filters.category || ""} className="input">
-              <option value="">All categories</option>
-              {topCategories.map((category) => (
-                <option key={category._id} value={category.slug}>{category.name}</option>
-              ))}
-            </select>
+            <CustomSelect
+              id="f-cat"
+              name="category"
+              defaultValue={filters.category || ""}
+              ariaLabel="Category"
+              options={[
+                { value: "", label: "All categories" },
+                ...topCategories.map((category) => ({ value: category.slug, label: category.name })),
+              ]}
+            />
           </div>
         )}
         <div>
@@ -93,11 +98,13 @@ export default function CatalogBrowser({
         </div>
         <div>
           <label htmlFor="f-sort" className="flabel">Sort by</label>
-          <select id="f-sort" name="sort" defaultValue={filters.sort || "newest"} className="input">
-            {SORTS.map((sort) => (
-              <option key={sort.value} value={sort.value}>{sort.label}</option>
-            ))}
-          </select>
+          <CustomSelect
+            id="f-sort"
+            name="sort"
+            defaultValue={filters.sort || "newest"}
+            ariaLabel="Sort by"
+            options={SORTS}
+          />
         </div>
         <div className="flex items-center gap-3">
           <button type="submit" className="btn btn--primary btn--sm">

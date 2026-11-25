@@ -170,7 +170,7 @@ export default function AccountPage() {
                       onChange={(e) =>
                         setAddresses((prev) => prev.map((a, j) => ({ ...a, isDefault: e.target.checked ? j === i : a.isDefault && j !== i })))
                       }
-                      className="accent-[var(--sf-primary)]"
+                      className="chk"
                     />
                     Default address
                   </label>

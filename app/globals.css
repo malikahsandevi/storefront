@@ -424,8 +424,160 @@ a.panel:hover {
   border-color: var(--sf-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--sf-primary) 22%, transparent);
 }
-select.input {
+/* No browser-default widgets anywhere (Ahsan's standing rule):
+   number fields lose their native spinner arrows, search fields
+   lose the native clear button — the site's own steppers and
+   controls are the only affordances. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
   appearance: none;
+}
+
+/* ── Custom select (components/CustomSelect.tsx) ─────────────────
+   Trigger reuses the .input box; the panel is the vault glass
+   language (bg-2 + primary radial + line border + deep shadow),
+   all from --sf-* tokens so light and dark both hold. */
+.csel {
+  position: relative;
+}
+.csel__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.csel__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.csel__caret {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--sf-muted-2);
+  transition: transform 0.2s ease;
+}
+.csel__trigger[aria-expanded="true"] .csel__caret {
+  transform: rotate(180deg);
+}
+.csel__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 288px;
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid var(--sf-line);
+  background:
+    radial-gradient(600px 200px at 85% -20%, color-mix(in srgb, var(--sf-primary) 12%, transparent), transparent 60%),
+    var(--sf-bg-2);
+  box-shadow: 0 30px 60px -25px rgb(0 0 0 / 0.7);
+}
+.csel__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  color: var(--sf-muted);
+  cursor: pointer;
+}
+.csel__option--active {
+  background: color-mix(in srgb, var(--sf-text) 7%, transparent);
+  color: var(--sf-text);
+}
+.csel__option--selected {
+  color: var(--sf-primary);
+  font-weight: 600;
+}
+.csel__check {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* ── Custom checkbox / radio ─────────────────────────────────────
+   The native input itself is redrawn: appearance none, token
+   border/fill, drawn check (clip-path) / dot. Checked behaviour
+   and form semantics are the native input's own. */
+input.chk,
+input.rdo {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  border: 1.5px solid var(--line-2);
+  background: color-mix(in srgb, var(--sf-text) 4%, transparent);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+input.chk {
+  border-radius: 5px;
+}
+input.rdo {
+  border-radius: 999px;
+}
+input.chk::before,
+input.rdo::before {
+  content: "";
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+input.chk::before {
+  width: 10px;
+  height: 10px;
+  background: #fff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+input.rdo::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--sf-primary);
+}
+input.chk:checked {
+  background: var(--sf-primary);
+  border-color: var(--sf-primary);
+}
+input.rdo:checked {
+  border-color: var(--sf-primary);
+}
+input.chk:checked::before,
+input.rdo:checked::before {
+  transform: scale(1);
+}
+input.chk:focus-visible,
+input.rdo:focus-visible {
+  outline: none;
+  border-color: var(--sf-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sf-primary) 22%, transparent);
 }
 .flabel {
   display: block;
