@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
-import { IconArrow, IconBag, IconHeart, IconSearch, IconUser } from "./icons";
+import { IconArrow, IconBag, IconChevron, IconHeart, IconSearch, IconUser } from "./icons";
 
 /**
  * The store's header: ONE sticky glass bar (76px) — wordmark
@@ -75,6 +75,30 @@ export default function Header({
   useEffect(() => {
     if (panel !== "none") setMega(null);
   }, [panel]);
+
+  // Category pill scroll arrows: an arrow (over a soft shade of
+  // the pill's own colour) shows at an end only while the pill can
+  // scroll that way, so the scrollability is discoverable; clicking
+  // scrolls the pill by a chunk. Native scroll/drag/wheel still work.
+  const navListRef = useRef<HTMLUListElement>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+  const updateNavArrows = () => {
+    const el = navListRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 4);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+  useEffect(() => {
+    updateNavArrows();
+    window.addEventListener("resize", updateNavArrows);
+    return () => window.removeEventListener("resize", updateNavArrows);
+  }, [categories]);
+  const scrollNav = (dir: 1 | -1) => {
+    const el = navListRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(220, el.clientWidth * 0.6), behavior: "smooth" });
+  };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +186,7 @@ export default function Header({
           </Link>
 
           <nav className="hdr__nav" aria-label="Categories">
-            <ul className="hdr__nav-list no-scrollbar">
+            <ul ref={navListRef} className="hdr__nav-list no-scrollbar" onScroll={updateNavArrows}>
               <li onMouseEnter={() => setMega(null)}>
                 <Link href="/shop" className="hdr__nav-link">
                   All Products
@@ -193,6 +217,30 @@ export default function Header({
                 );
               })}
             </ul>
+            {canPrev && (
+              <span className="hdr__nav-fade hdr__nav-fade--prev">
+                <button
+                  type="button"
+                  className="hdr__nav-arrow hdr__nav-arrow--prev"
+                  aria-label="Scroll categories back"
+                  onClick={() => scrollNav(-1)}
+                >
+                  <IconChevron />
+                </button>
+              </span>
+            )}
+            {canNext && (
+              <span className="hdr__nav-fade hdr__nav-fade--next">
+                <button
+                  type="button"
+                  className="hdr__nav-arrow hdr__nav-arrow--next"
+                  aria-label="Scroll categories forward"
+                  onClick={() => scrollNav(1)}
+                >
+                  <IconChevron />
+                </button>
+              </span>
+            )}
           </nav>
 
           <div className="hdr__actions">

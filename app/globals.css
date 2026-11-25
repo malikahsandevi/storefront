@@ -2283,8 +2283,73 @@ a.tick__fact:hover {
   }
 }
 .hdr__nav {
-  margin-inline: auto;
+  position: relative;
+  flex: 1 1 auto;
   min-width: 0;
+}
+/* Scroll arrows inside the pill: each sits over a soft shade — a
+   gradient from the pill's own colour to transparent — so nav
+   items visibly fade under the arrow while scrolling. An arrow is
+   rendered only while the pill can scroll in its direction. */
+.hdr__nav-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 78px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+.hdr__nav-fade--prev {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 7px;
+  border-radius: 999px 0 0 999px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--sf-text) 4%, var(--sf-bg)) 22%,
+    transparent
+  );
+}
+.hdr__nav-fade--next {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 7px;
+  border-radius: 0 999px 999px 0;
+  background: linear-gradient(
+    to left,
+    color-mix(in srgb, var(--sf-text) 4%, var(--sf-bg)) 22%,
+    transparent
+  );
+}
+.hdr__nav-arrow {
+  pointer-events: auto;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sf-text);
+  background: color-mix(in srgb, var(--sf-text) 7%, var(--sf-bg));
+  border: 1px solid var(--sf-line);
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+.hdr__nav-arrow:hover {
+  border-color: color-mix(in srgb, var(--sf-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--sf-primary) 10%, var(--sf-bg));
+}
+.hdr__nav-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+.hdr__nav-arrow--prev svg {
+  transform: scaleX(-1);
 }
 .hdr__nav-list {
   display: flex;

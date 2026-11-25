@@ -30,6 +30,14 @@ export function IconArrow({ className }: P) {
   );
 }
 
+export function IconChevron({ className }: P) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />
+    </svg>
+  );
+}
+
 export function IconSearch({ className }: P) {
   return (
     <svg {...base} className={className}>
