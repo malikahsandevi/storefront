@@ -10,8 +10,10 @@ import { themeCss, themeMode } from "@/lib/theme";
 import {
   SITE_URL,
   fetchCategories,
+  fetchProducts,
   fetchStoreConfig,
   storeDisplayName,
+  type CatalogProduct,
 } from "@/lib/api";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -66,6 +68,26 @@ const display = Outfit({
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const [config, categories] = await Promise.all([fetchStoreConfig(), fetchCategories()]);
   const name = storeDisplayName(config);
+  // Featured product for each main category that HAS subcategories —
+  // the header's hover mega panel shows one real product of the
+  // category (the catalog query for a parent category already
+  // includes its subcategories' products; first in the API's
+  // default order wins).
+  const parentsWithSubs = new Set(
+    categories.filter((c) => c.parent).map((c) => String(c.parent!._id)),
+  );
+  const featuredEntries = await Promise.all(
+    categories
+      .filter((c) => !c.parent && parentsWithSubs.has(String(c._id)))
+      .map(async (c) => {
+        const { products } = await fetchProducts({ category: c.slug, limit: 1 });
+        return [String(c._id), products[0] ?? null] as const;
+      }),
+  );
+  const featured: Record<string, CatalogProduct> = {};
+  featuredEntries.forEach(([id, product]) => {
+    if (product) featured[id] = product;
+  });
   return (
     <html
       lang="en"
@@ -79,7 +101,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col bg-ink font-sans text-cream">
         <ShopProvider>
           <CartUIProvider>
-            <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} contactEmail={config.contactEmail} phone={config.phone} />
+            <Header storeName={name} logo={config.logo} tagline={config.tagline} categories={categories} featured={featured} currency={config.currency} contactEmail={config.contactEmail} phone={config.phone} />
             <main className="w-full flex-1">{children}</main>
             <Footer config={config} categories={categories} />
             <CartDrawer />
