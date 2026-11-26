@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiCall, type CustomerAddress, type CustomerProfile } from "@/lib/api";
+import { apiCall, ApiError, type CustomerAddress, type CustomerProfile } from "@/lib/api";
 import { useShop } from "@/lib/store";
 
 const emptyAddress: CustomerAddress = {
@@ -14,7 +14,7 @@ const emptyAddress: CustomerAddress = {
  *  wiring (redirect when signed out, /me fetch + save with the
  *  session token), restyled as numbered vault panels. */
 export default function AccountPage() {
-  const { user, ready, logout } = useShop();
+  const { user, ready, logout, expireSession } = useShop();
   const router = useRouter();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -39,8 +39,22 @@ export default function AccountPage() {
         setPhone(data.phone);
         setAddresses(data.addresses);
       })
-      .catch(() => setError("Could not load your profile."));
-  }, [user]);
+      .catch((err) => {
+        // A 401/403 here means the session died after it was
+        // restored — that is a sign-out, not a load error: drop
+        // the session and the redirect above takes over. Only a
+        // genuine failure for a live session shows the error.
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          expireSession();
+        } else {
+          setError("Could not load your profile.");
+        }
+      });
+  }, [user, expireSession]);
+
+  if (!ready) {
+    return <p className="wrap py-16 text-center text-muted">Loading…</p>;
+  }
 
   if (!user) {
     return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
@@ -59,6 +73,10 @@ export default function AccountPage() {
       setAddresses(updated.addresses);
       setMessage("Your profile has been saved.");
     } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        expireSession();
+        return;
+      }
       setError(err instanceof Error ? err.message : "Could not save your profile.");
     } finally {
       setSaving(false);

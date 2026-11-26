@@ -2682,6 +2682,34 @@ a.tick__fact:hover {
   width: 20px;
   height: 20px;
 }
+/* The logged-out account spot: a visible Login entry in the
+   header's own pill language (the nav links' type, the search
+   pill's border/fill), sized to sit level with the 42px icons. */
+.hdr__login {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 18px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sf-text);
+  background: color-mix(in srgb, var(--sf-text) 4%, transparent);
+  border: 1px solid var(--sf-line);
+  border-radius: 999px;
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    color 0.25s ease;
+}
+.hdr__login:hover {
+  border-color: color-mix(in srgb, var(--sf-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--sf-primary) 8%, transparent);
+  color: var(--sf-primary);
+}
 .hdr__bubble {
   position: absolute;
   top: 4px;

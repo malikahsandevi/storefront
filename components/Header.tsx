@@ -80,7 +80,7 @@ export default function Header({
    *  switch's starting point before any visitor choice applies. */
   defaultMode: string;
 }) {
-  const { cartCount, wishlist, user } = useShop();
+  const { cartCount, wishlist, user, ready } = useShop();
   const { setOpen: setCartOpen } = useCartUI();
   const router = useRouter();
 
@@ -628,9 +628,25 @@ export default function Header({
               <IconHeart />
               {wishlist.length > 0 && <span className="hdr__bubble">{wishlist.length}</span>}
             </Link>
-            <Link href={user ? "/account" : "/login"} className="hdr__icon" aria-label={user ? "My account" : "Sign in"}>
-              <IconUser />
-            </Link>
+            {/* The account spot tells the truth about the session:
+                a validated sign-in gets the account icon; a visitor
+                with no (or a dead) session gets a visible Login
+                entry; while the stored session is still being
+                validated an inert icon holds the spot — neither
+                state is claimed before it is known. */}
+            {user ? (
+              <Link href="/account" className="hdr__icon" aria-label="My account">
+                <IconUser />
+              </Link>
+            ) : ready ? (
+              <Link href="/login" className="hdr__login">
+                Login
+              </Link>
+            ) : (
+              <span className="hdr__icon" aria-hidden>
+                <IconUser />
+              </span>
+            )}
             <button
               type="button"
               className="hdr__icon"

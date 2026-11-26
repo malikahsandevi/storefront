@@ -16,7 +16,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { apiCall, type CatalogProduct, type CustomerProfile } from "./api";
+import { apiCall, ApiError, type CatalogProduct, type CustomerProfile } from "./api";
 
 export type ProductLike = Pick<
   CatalogProduct,
@@ -63,6 +63,11 @@ interface ShopState {
   login: (email: string, password: string) => Promise<void>;
   register: (data: { firstName: string; lastName: string; email: string; password: string }) => Promise<void>;
   logout: () => void;
+  /** The stored session turned out to be dead server-side (expired
+   *  token, rotated secret, deactivated/role-changed account): drop
+   *  it AND the cart/wishlist that were mirrored from that account,
+   *  so the whole UI treats the visitor as logged out. */
+  expireSession: () => void;
   addToCart: (product: ProductLike, quantity?: number, variant?: string) => void;
   updateQty: (productId: string, variant: string | undefined, quantity: number) => void;
   removeLine: (productId: string, variant?: string) => void;
@@ -95,14 +100,83 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const hydrated = useRef(false);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The token of the session the UI currently believes in. The
+   *  load-time validation compares against this (not localStorage,
+   *  whose persist effect transiently clears the key on mount). */
+  const sessionTokenRef = useRef<string | null>(null);
 
-  // Initial load from localStorage.
+  // Initial load from localStorage. Cart + wishlist are device
+  // state and restore at once; a stored SESSION does not — it is
+  // only believed after the backend accepts it (GET /me), because
+  // a token can die server-side (30-day expiry, a rotated JWT
+  // secret, a deactivated or role-changed account) while the local
+  // copy still looks signed in. Until that check settles, `ready`
+  // stays false and the UI renders its neutral loading state —
+  // never the signed-in shell, never an error. A 401/403 answer
+  // means the session is dead: it and the cart/wishlist mirrored
+  // from that account are dropped. Any other failure (offline,
+  // 5xx) keeps the stored session — a network hiccup must not log
+  // the shopper out.
   useEffect(() => {
-    setUser(readJSON<SessionUser>(AUTH_KEY));
     setCart(readJSON<CartLine[]>(CART_KEY) || []);
     setWishlist(readJSON<WishlistEntry[]>(WISHLIST_KEY) || []);
     hydrated.current = true;
-    setReady(true);
+    const stored = readJSON<SessionUser>(AUTH_KEY);
+    if (!stored?.token) {
+      setReady(true);
+      return;
+    }
+    sessionTokenRef.current = stored.token;
+    let cancelled = false;
+    // A fresh sign-in mid-check replaces the session; the stale
+    // check must not overwrite or clear that newer one.
+    const superseded = () => sessionTokenRef.current !== stored.token;
+    apiCall<CustomerProfile>("GET", "/api/storefront/me", undefined, stored.token)
+      .then((profile) => {
+        if (cancelled) return;
+        if (!superseded()) {
+          const session = {
+            ...stored,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            email: profile.email,
+          };
+          // Rewrite the stored copy explicitly: the persist
+          // effect cleared the key transiently on mount.
+          try {
+            localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+          } catch {
+            /* storage unavailable — the in-memory session stands */
+          }
+          setUser(session);
+        }
+        setReady(true);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (!superseded()) {
+          if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+            sessionTokenRef.current = null;
+            localStorage.removeItem(AUTH_KEY);
+            setUser(null);
+            setCart([]);
+            setWishlist([]);
+          } else {
+            // Kept session — restore the stored copy the persist
+            // effect transiently cleared on mount.
+            try {
+              localStorage.setItem(AUTH_KEY, JSON.stringify(stored));
+            } catch {
+              /* storage unavailable — the in-memory session stands */
+            }
+            setUser(stored);
+          }
+        }
+        setReady(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -141,6 +215,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   // clash so the shopper's latest action is what survives).
   const adoptSession = useCallback(
     async (session: SessionUser) => {
+      sessionTokenRef.current = session.token;
       setUser(session);
       try {
         const profile = await apiCall<CustomerProfile>("GET", "/api/storefront/me", undefined, session.token);
@@ -200,7 +275,24 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     [adoptSession],
   );
 
-  const logout = useCallback(() => setUser(null), []);
+  const logout = useCallback(() => {
+    sessionTokenRef.current = null;
+    setUser(null);
+  }, []);
+
+  // Same dead-session treatment as the load-time validation: the
+  // session goes, and so does everything mirrored from its account.
+  const expireSession = useCallback(() => {
+    sessionTokenRef.current = null;
+    try {
+      localStorage.removeItem(AUTH_KEY);
+    } catch {
+      /* storage unavailable — the state reset below still applies */
+    }
+    setUser(null);
+    setCart([]);
+    setWishlist([]);
+  }, []);
 
   const addToCart = useCallback(
     (product: ProductLike, quantity = 1, variant?: string) => {
@@ -313,6 +405,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
+      expireSession,
       addToCart,
       updateQty,
       removeLine,
@@ -320,7 +413,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       toggleWishlist,
       isWishlisted,
     }),
-    [user, ready, cart, wishlist, login, register, logout, addToCart, updateQty, removeLine, clearCart, toggleWishlist, isWishlisted],
+    [user, ready, cart, wishlist, login, register, logout, expireSession, addToCart, updateQty, removeLine, clearCart, toggleWishlist, isWishlisted],
   );
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;

@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiCall, formatMoney, type MyOrder } from "@/lib/api";
+import { apiCall, ApiError, formatMoney, type MyOrder } from "@/lib/api";
 import { useShop } from "@/lib/store";
 
 /** One order, in full: the previous build's fetch and fields,
  *  vault panels with the status as a solid accent pill. */
 export default function MyOrderDetailPage() {
-  const { user, ready } = useShop();
+  const { user, ready, expireSession } = useShop();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const [order, setOrder] = useState<MyOrder | null>(null);
@@ -27,9 +27,18 @@ export default function MyOrderDetailPage() {
     if (!user || !params?.id) return;
     apiCall<MyOrder>("GET", `/api/storefront/me/orders/${params.id}`, undefined, user.token)
       .then(setOrder)
-      .catch(() => setError("This order could not be found."));
-  }, [user, params]);
+      .catch((err) => {
+        // Session died after restore → sign-out path, not the
+        // not-found state; a live session's 404 keeps that state.
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          expireSession();
+        } else {
+          setError("This order could not be found.");
+        }
+      });
+  }, [user, params, expireSession]);
 
+  if (!ready) return <p className="wrap py-16 text-center text-muted">Loading…</p>;
   if (!user) return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
   if (error) {
     return (

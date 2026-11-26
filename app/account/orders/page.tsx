@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiCall, formatMoney, type MyOrder } from "@/lib/api";
+import { apiCall, ApiError, formatMoney, type MyOrder } from "@/lib/api";
 import { useShop } from "@/lib/store";
 
 /** My Orders list: the previous build's fetch (/me/orders with
  *  the session token), rows as vault panels. */
 export default function MyOrdersPage() {
-  const { user, ready } = useShop();
+  const { user, ready, expireSession } = useShop();
   const router = useRouter();
   const [orders, setOrders] = useState<MyOrder[] | null>(null);
   const [currency, setCurrency] = useState("USD");
@@ -26,9 +26,18 @@ export default function MyOrdersPage() {
     if (!user) return;
     apiCall<MyOrder[]>("GET", "/api/storefront/me/orders", undefined, user.token)
       .then(setOrders)
-      .catch(() => setError("Could not load your orders."));
-  }, [user]);
+      .catch((err) => {
+        // Session died after restore → sign-out path (the
+        // redirect above fires); other failures keep the error.
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          expireSession();
+        } else {
+          setError("Could not load your orders.");
+        }
+      });
+  }, [user, expireSession]);
 
+  if (!ready) return <p className="wrap py-16 text-center text-muted">Loading…</p>;
   if (!user) return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
 
   return (
