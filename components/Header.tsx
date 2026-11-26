@@ -80,7 +80,7 @@ export default function Header({
    *  switch's starting point before any visitor choice applies. */
   defaultMode: string;
 }) {
-  const { cartCount, wishlist, user, ready, openAuth } = useShop();
+  const { cartCount, wishlist, user, openAuth } = useShop();
   const { setOpen: setCartOpen } = useCartUI();
   const router = useRouter();
 
@@ -669,24 +669,21 @@ export default function Header({
               <IconHeart />
               {wishlist.length > 0 && <span className="hdr__bubble">{wishlist.length}</span>}
             </Link>
-            {/* The account spot tells the truth about the session:
-                a validated sign-in gets the account icon; a visitor
-                with no (or a dead) session gets a visible Login
-                entry; while the stored session is still being
-                validated an inert icon holds the spot — neither
-                state is claimed before it is known. */}
+            {/* The account spot (Ahsan's rule, 2026-11-26): until
+                a user has actually loaded, the spot reads Login —
+                during validation exactly as when logged out. The
+                profile icon appears only for a validated, loaded
+                user; an inert icon placeholder used to sit here
+                mid-validation and read as already-signed-in, which
+                is why he ordered it gone. */}
             {user ? (
               <Link href="/account" className="hdr__icon" aria-label="My account">
                 <IconUser />
               </Link>
-            ) : ready ? (
+            ) : (
               <button type="button" className="hdr__login" onClick={() => openAuth("login")}>
                 Login
               </button>
-            ) : (
-              <span className="hdr__icon" aria-hidden>
-                <IconUser />
-              </span>
             )}
             <button
               type="button"

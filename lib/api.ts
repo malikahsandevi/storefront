@@ -42,8 +42,12 @@ export interface StoreConfig {
   phone: string;
   paymentMethods: { name: string; description: string }[];
   /** True when the shop's Stripe entry is active with a secret key —
-   *  the "Stripe" payment method then redirects to Stripe Checkout. */
+   *  the "Stripe" payment method then takes card payment. */
   stripePayAvailable: boolean;
+  /** The Stripe publishable key (public by design) for mounting
+   *  the embedded Payment Element at checkout; "" when the
+   *  gateway is not configured. */
+  stripePublishableKey: string;
   appearance: StoreAppearance;
 }
 
@@ -217,6 +221,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   phone: "",
   paymentMethods: [],
   stripePayAvailable: false,
+  stripePublishableKey: "",
   appearance: FALLBACK_APPEARANCE,
 };
 

@@ -21,7 +21,7 @@ import { IconClose } from "./icons";
  * page: the emailed reset link needs one.
  */
 export default function AuthModal() {
-  const { authOpen, authMode, authNext, closeAuth, switchAuthMode, login, register } =
+  const { authOpen, authMode, authNext, closeAuth, switchAuthMode, login, register, user } =
     useShop();
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
@@ -64,6 +64,16 @@ export default function AuthModal() {
       document.body.style.overflow = prev;
     };
   }, [authOpen, closeAuth]);
+
+  // If a session lands while the popup is open — the visitor
+  // clicked Login during the validation window and the stored
+  // session then checked out — the popup closes on its own: a
+  // signed-in visitor never sits in a sign-in form. (The submit
+  // path is unaffected: finish() reads its destination from its
+  // own render closure, not from state this clears.)
+  useEffect(() => {
+    if (user && authOpen) closeAuth();
+  }, [user, authOpen, closeAuth]);
 
   if (!authOpen) return null;
 

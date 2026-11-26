@@ -13,6 +13,7 @@ import {
   type StoreConfig,
 } from "@/lib/api";
 import { useShop } from "@/lib/store";
+import type { Stripe, StripeElements } from "@stripe/stripe-js";
 import CustomSelect from "@/components/CustomSelect";
 
 /**
@@ -27,7 +28,7 @@ import CustomSelect from "@/components/CustomSelect";
  * the ?payment= return landing re-reads the order's real status.)
  */
 export default function CheckoutPage() {
-  const { cart, user, clearCart, ready } = useShop();
+  const { cart, user, clearCart, ready, openAuth } = useShop();
   const router = useRouter();
 
   const [config, setConfig] = useState<StoreConfig | null>(null);
@@ -57,6 +58,19 @@ export default function CheckoutPage() {
   // Return landing from Stripe's hosted page (?payment=success|
   // cancelled&orderId=…): the order's real state is re-read from the
   // backend — this page never declares a payment "Paid" itself.
+  // Embedded card payment (Ahsan, 2026-11-26: card details are
+  // taken HERE, never by redirecting to Stripe's hosted page):
+  // after a Stripe order is placed, the backend opens a
+  // PaymentIntent and this page mounts Stripe's Payment Element
+  // in place, confirms in place, and hands off to the same
+  // truthful status re-read the return landing uses.
+  const [payStep, setPayStep] = useState<{ order: PlacedOrder; clientSecret: string } | null>(null);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payReady, setPayReady] = useState(false);
+  const [payMessage, setPayMessage] = useState("");
+  const stripeRef = useRef<Stripe | null>(null);
+  const elementsRef = useRef<StripeElements | null>(null);
+  const payMountRef = useRef<HTMLDivElement | null>(null);
   const [landing, setLanding] = useState<{ kind: "success" | "cancelled"; orderId: string; orderNumber: string } | null>(null);
   const [landingOrder, setLandingOrder] = useState<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number } | null>(null);
   const [landingDone, setLandingDone] = useState(false);
@@ -138,26 +152,101 @@ export default function CheckoutPage() {
     return () => { stale = true; };
   }, [landing, user]);
 
+  // Mount the Payment Element when the payment step opens:
+  // Stripe.js loads from js.stripe.com with the shop's
+  // publishable key (served by the store config — public by
+  // design), and the element is styled from the site's own
+  // tokens as far as Stripe's appearance API allows. If the
+  // library cannot load, the step degrades to the honest
+  // placed-but-unpaid line instead of a dead box.
   useEffect(() => {
-    if (!user) return;
-    setFirstName(user.firstName || "");
-    setLastName(user.lastName || "");
-    setEmail(user.email || "");
+    if (!payStep || !config?.stripePublishableKey) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { loadStripe } = await import("@stripe/stripe-js");
+        const stripe = await loadStripe(config.stripePublishableKey);
+        if (!stripe || cancelled || !payMountRef.current) throw new Error("stripe-load");
+        const isDark = document.documentElement.getAttribute("data-mode") === "dark";
+        const styles = getComputedStyle(document.documentElement);
+        const elements = stripe.elements({
+          clientSecret: payStep.clientSecret,
+          appearance: {
+            theme: isDark ? "night" : "stripe",
+            variables: {
+              colorPrimary: styles.getPropertyValue("--sf-primary").trim() || "#f97316",
+              fontFamily: getComputedStyle(document.body).fontFamily,
+              borderRadius: "14px",
+            },
+          },
+        });
+        const paymentElement = elements.create("payment");
+        paymentElement.on("ready", () => { if (!cancelled) setPayReady(true); });
+        paymentElement.mount(payMountRef.current);
+        stripeRef.current = stripe;
+        elementsRef.current = elements;
+      } catch {
+        if (!cancelled) {
+          setPayMessage("Card payment could not be loaded — your order is placed but unpaid. You can pay later from order tracking or your account.");
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [payStep, config?.stripePublishableKey]);
+
+  // Account details land in the form AUTOMATICALLY (Ahsan,
+  // 2026-11-26) — with merge semantics, never overwrite: when a
+  // user becomes known (already signed in on arrival, or signing
+  // in from the popup mid-checkout), each field takes the
+  // account's value ONLY while it is still empty. Anything the
+  // guest already typed stays exactly as typed; the page never
+  // remounts across the popup, so the cart and every choice
+  // survive untouched. The address follows the same rule per
+  // field, except the country: a completely untouched address
+  // takes the default saved address wholesale (country
+  // included); a half-typed one keeps its country line as-is.
+  const mergedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user || mergedForRef.current === user._id) return;
+    mergedForRef.current = user._id;
+    setFirstName((v) => v || user.firstName || "");
+    setLastName((v) => v || user.lastName || "");
+    setEmail((v) => v || user.email || "");
+    const addressUntouched = !street && !city && !state && !zipCode;
     apiCall<CustomerProfile>("GET", "/api/storefront/me", undefined, user.token)
       .then((data) => {
         setProfile(data);
-        setPhone(data.phone || "");
+        setPhone((v) => v || data.phone || "");
         const address = data.addresses.find((a) => a.isDefault) || data.addresses[0];
         if (address) {
-          setStreet(address.street);
-          setCity(address.city);
-          setState(address.state);
-          setZipCode(address.zipCode);
-          setCountry(address.country);
+          setStreet((v) => v || address.street);
+          setCity((v) => v || address.city);
+          setState((v) => v || address.state);
+          setZipCode((v) => v || address.zipCode);
+          if (addressUntouched) setCountry(address.country);
         }
       })
       .catch(() => {});
+    // The address snapshot is read from the render in which the
+    // user landed — that is the merge moment by construction.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Login first (Ahsan, 2026-11-26): a logged-out arrival at
+  // checkout gets the sign-in popup ONCE, in login mode — but
+  // only after the session check has settled (a signed-in
+  // visitor never sees the flash), never over a Stripe return
+  // landing, and never for an empty cart. The popup stays
+  // closable: guest checkout is a designed feature of this
+  // store, and closing it simply continues as guest.
+  const loginPromptedRef = useRef(false);
+  useEffect(() => {
+    if (!ready || user || loginPromptedRef.current) return;
+    if (items.length === 0) return;
+    if (new URLSearchParams(window.location.search).has("payment")) return;
+    loginPromptedRef.current = true;
+    openAuth("login");
+  }, [ready, user, items.length, openAuth]);
 
   useEffect(() => {
     if (config && !paymentMethod) {
@@ -192,6 +281,39 @@ export default function CheckoutPage() {
         });
     }, 450);
   }, [items, city, methodId, optionId, couponCode, email, user]);
+
+  // Confirm the card payment IN PLACE. A decline comes back as
+  // Stripe's own human message, shown right here — the order
+  // stays placed + unpaid and the element stays editable for a
+  // retry. A success hands off to the return-landing state,
+  // whose re-read (immediate + one delayed) shows "Payment
+  // confirmed" ONLY when the backend — via the webhook — says
+  // the order is paid. This page never declares Paid itself.
+  const confirmPay = async () => {
+    const stripe = stripeRef.current;
+    const elements = elementsRef.current;
+    if (!stripe || !elements || !payStep) return;
+    setPayBusy(true);
+    setPayMessage("");
+    try {
+      const { error } = await stripe.confirmPayment({
+        elements,
+        redirect: "if_required",
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout?payment=success&orderId=${payStep.order._id}&order=${encodeURIComponent(payStep.order.orderNumber)}`,
+        },
+      });
+      if (error) {
+        setPayMessage(error.message || "Your card could not be charged — please check the details and try again.");
+        setPayBusy(false);
+        return;
+      }
+      setLanding({ kind: "success", orderId: payStep.order._id, orderNumber: payStep.order.orderNumber });
+    } catch {
+      setPayMessage("Something went wrong while confirming your payment — your order is placed; check its status from order tracking before paying again.");
+      setPayBusy(false);
+    }
+  };
 
   if (landing) {
     const shownNumber = landingOrder?.orderNumber || landing.orderNumber;
@@ -252,6 +374,55 @@ export default function CheckoutPage() {
     );
   }
 
+  if (payStep) {
+    return (
+      <div className="wrap py-16">
+        <div className="mx-auto max-w-xl text-center">
+          <p aria-hidden className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-primary ring-1 ring-primary/40">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-9 w-9" aria-hidden>
+              <rect x="3" y="5" width="18" height="14" rx="3" />
+              <path d="M3 10h18" />
+            </svg>
+          </p>
+          <h1 className="h1-page mt-6">Pay for your order</h1>
+          <p className="mt-4 text-muted">
+            Order <span className="font-bold text-cream">{payStep.order.orderNumber}</span> is placed —{" "}
+            <span className="font-bold text-cream">{formatMoney(payStep.order.total, currency)}</span> is left to pay.
+            Enter your card details below: they go straight to Stripe, and this store never sees or stores them.
+          </p>
+          <div className="panel panel--pad mt-7 text-left">
+            <div ref={payMountRef} />
+            {payMessage && <p className="mt-4 text-sm text-primary" role="alert">{payMessage}</p>}
+            <button
+              type="button"
+              onClick={confirmPay}
+              disabled={!payReady || payBusy}
+              className="btn btn--primary btn--block mt-5 disabled:opacity-60"
+            >
+              {payBusy ? "Confirming…" : `Pay ${formatMoney(payStep.order.total, currency)}`}
+            </button>
+          </div>
+          <p className="mt-5 text-sm text-muted">
+            Your order stays placed either way — if you leave this page, you can pay later from order tracking or your account.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/track-order" className="btn btn--ghost">
+              Track Order
+            </Link>
+            {user && (
+              <Link href="/account/orders" className="btn btn--ghost">
+                My Orders
+              </Link>
+            )}
+            <Link href="/shop" className="btn btn--ghost">
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (placed) {
     return (
       <div className="wrap py-16">
@@ -306,22 +477,29 @@ export default function CheckoutPage() {
         shippingMethodId: methodId || undefined,
         deliveryOptionId: optionId || undefined,
       }, user?.token);
-      if (stripeOnline) {
-        // Stash what the return landing needs to re-read this order
-        // as a guest (order number + email for tracking).
+      if (stripeOnline && !config?.stripePublishableKey) {
+        // Gateway on but no publishable key served — the element
+        // cannot mount, so skip straight to the honest line.
+        setPayError("Online payment could not be started — your order is placed but unpaid.");
+      } else if (stripeOnline) {
+        // Stash what the status re-read needs to find this order
+        // as a guest afterwards (order number + email for
+        // tracking) — the embedded flow re-reads through the
+        // same landing machinery a hosted return would.
         try {
           sessionStorage.setItem("stripe-return", JSON.stringify({
             orderId: order._id,
             orderNumber: order.orderNumber,
             email: user?.email || email,
           }));
-        } catch { /* the landing falls back to the order number alone */ }
+        } catch { /* the re-read falls back to the order number alone */ }
         try {
-          const session = await apiCall<{ url: string }>(
-            "POST", `/api/storefront/orders/${order._id}/stripe-session`, {}, user?.token,
+          const intent = await apiCall<{ clientSecret: string }>(
+            "POST", `/api/storefront/orders/${order._id}/stripe-intent`, {}, user?.token,
           );
+          setPlaced(order);
+          setPayStep({ order, clientSecret: intent.clientSecret });
           clearCart();
-          window.location.href = session.url;
           return;
         } catch {
           // The order IS placed; only the payment could not start.
@@ -486,7 +664,7 @@ export default function CheckoutPage() {
             </div>
             <p className="mt-3.5 text-xs text-muted-2">
               {stripeOnline
-                ? "After placing your order you will be redirected to Stripe's secure payment page to pay by card."
+                ? "You will enter your card details right here on this page after placing your order — nothing is charged until you confirm the payment."
                 : "Online payment methods are confirmed by the store after your order is placed; cash on delivery is paid when your order arrives."}
             </p>
           </section>

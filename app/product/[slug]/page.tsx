@@ -5,6 +5,7 @@ import Faq from "@/components/Faq";
 import ProductCard from "@/components/ProductCard";
 import { BuyPanel, ProductGallery } from "@/components/ProductDetail";
 import RatingStars from "@/components/RatingStars";
+import ReviewAvatar from "@/components/ReviewAvatar";
 import ReviewForm from "@/components/ReviewForm";
 import SectionHead from "@/components/SectionHead";
 import { HelpBand, StepsSection, faqItems } from "@/components/Sections";
@@ -262,7 +263,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             title={
               <>
                 Customer <strong>Reviews</strong>
-                {product.reviewCount > 0 ? ` (${product.reviewCount})` : ""}
               </>
             }
             id="reviews-heading"
@@ -275,14 +275,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 {reviews.map((review) => (
                   <li key={review._id} className="rounded-2xl border border-line bg-ink-2 p-5 sm:p-6">
                     <div className="flex items-center gap-3">
-                      {review.author.avatar ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={review.author.avatar} alt="" loading="lazy" className="h-9 w-9 rounded-full object-cover" />
-                      ) : (
-                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary">
-                          {review.author.name.charAt(0).toUpperCase()}
-                        </span>
-                      )}
+                      <ReviewAvatar name={review.author.name} avatar={review.author.avatar} />
                       <div>
                         <p className="text-sm font-semibold text-cream">{review.author.name}</p>
                         <p className="flex items-center gap-2 text-xs text-muted-2">
