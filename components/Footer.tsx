@@ -1,8 +1,8 @@
 import Link from "next/link";
 import FooterAuthLinks from "./FooterAuthLinks";
 import Year from "./Year";
-import { storeDisplayName, type CatalogCategory, type StoreConfig } from "@/lib/api";
-import { IconCheck, IconMail, IconPhone } from "./icons";
+import { storeDisplayName, whatsAppUrl, type CatalogCategory, type StoreConfig } from "@/lib/api";
+import { IconCheck, IconMail, IconPhone, IconWhatsApp } from "./icons";
 
 /**
  * The reference store's footer, rebuilt with our data: a brand
@@ -106,6 +106,16 @@ export default function Footer({
                 <IconPhone /> {config.phone}
               </a>
             )}
+            {config.phone && whatsAppUrl(config.phone) && (
+              <a
+                className="ftr__contact-link"
+                href={whatsAppUrl(config.phone) as string}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <IconWhatsApp /> Chat on WhatsApp
+              </a>
+            )}
             {!config.contactEmail && !config.phone && (
               <p className="ftr__text">Reach us any time from your account page.</p>
             )}
@@ -119,6 +129,12 @@ export default function Footer({
           <p>
             © <Year /> {name}. All rights reserved.
           </p>
+          <nav className="ftr__legal" aria-label="Legal">
+            <Link href="/about">About</Link>
+            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/terms">Terms of Service</Link>
+            <Link href="/returns">Returns &amp; Refunds</Link>
+          </nav>
           {paymentNames.length > 0 && <p>Pay with {paymentNames.join(" · ")}</p>}
         </div>
       </div>

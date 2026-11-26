@@ -311,6 +311,22 @@ export async function fetchProductBySlug(slug: string): Promise<CatalogProduct |
   }
 }
 
+export async function fetchShippingOptions(): Promise<ShippingOptionSet | null> {
+  try {
+    return await serverGet<ShippingOptionSet>("/api/storefront/shipping-options");
+  } catch {
+    return null;
+  }
+}
+
+/** The store's WhatsApp chat link for a configured phone number,
+ *  or null when the number is missing or too short to be real —
+ *  wa.me takes digits only, in international format. */
+export function whatsAppUrl(phone: string): string | null {
+  const digits = String(phone || "").replace(/\D/g, "");
+  return digits.length >= 7 ? `https://wa.me/${digits}` : null;
+}
+
 export async function fetchProductReviews(productId: string): Promise<ProductReview[]> {
   try {
     return await serverGet<ProductReview[]>(`/api/storefront/products/${productId}/reviews`);
@@ -334,14 +350,29 @@ export async function apiCall<T>(
   body?: unknown,
   token?: string | null,
 ): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  // Every call carries a hard timeout: a stalled connection must
+  // never leave a caller waiting forever. The load-time session
+  // validation in lib/store.tsx rides on this — without the abort,
+  // a hung /me request kept `ready` false indefinitely and every
+  // auth-gated area (review form, account, tracking) sat on its
+  // "Loading…" state for good. An abort surfaces as a plain
+  // network error, which callers already treat as transient.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
   let payload: unknown = null;
   try {
     payload = await res.json();

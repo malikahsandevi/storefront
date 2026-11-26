@@ -1,7 +1,7 @@
 import Link from "next/link";
-import type { CatalogCategory, StoreConfig } from "@/lib/api";
+import { whatsAppUrl, type CatalogCategory, type StoreConfig } from "@/lib/api";
 import SectionHead from "./SectionHead";
-import { IconArrow, IconChat, IconCheck, IconShield } from "./icons";
+import { IconArrow, IconChat, IconCheck, IconShield, IconWhatsApp } from "./icons";
 
 /**
  * Shared page sections in the reference store's composition,
@@ -300,6 +300,21 @@ export function HelpBand({
                   Contact the store <IconArrow className="arr h-4 w-4" />
                 </a>
               )}
+              {config.phone && whatsAppUrl(config.phone) && (
+                <a
+                  href={whatsAppUrl(config.phone) as string}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`btn ${config.contactEmail ? "btn--ghost" : "btn--primary"}`}
+                >
+                  <IconWhatsApp className="h-[18px] w-[18px]" /> Chat on WhatsApp
+                </a>
+              )}
+              {config.phone && !config.contactEmail && (
+                <a href={`tel:${config.phone.replace(/\s+/g, "")}`} className="btn btn--ghost">
+                  Call {config.phone}
+                </a>
+              )}
               <Link href="/track-order" className="btn btn--ghost">
                 Track your order
               </Link>
@@ -334,7 +349,7 @@ export function FinalCta({ config }: { config: StoreConfig }) {
       <div className="wrap relative">
         <div data-reveal>
           <h2 className="h2">
-            Ready to upgrade your <strong>everyday tech?</strong>
+            Ready to upgrade your <strong>everyday essentials?</strong>
           </h2>
           <p className="lead mx-auto text-center">
             Browse the live catalog, or track an order you already placed. Both take less than a
@@ -364,6 +379,16 @@ export function FinalCta({ config }: { config: StoreConfig }) {
             {config.phone && (
               <a href={`tel:${config.phone.replace(/\s+/g, "")}`} className="btn btn--ghost btn--sm">
                 {config.phone}
+              </a>
+            )}
+            {config.phone && whatsAppUrl(config.phone) && (
+              <a
+                href={whatsAppUrl(config.phone) as string}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn--ghost btn--sm"
+              >
+                <IconWhatsApp className="h-4 w-4" /> WhatsApp
               </a>
             )}
             {!config.contactEmail && !config.phone && (

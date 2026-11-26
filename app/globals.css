@@ -2092,8 +2092,27 @@ a.tick__fact:hover {
 .faq__item[data-open="true"] .faq__q .fx {
   transform: rotate(45deg);
 }
+/* The answer is ALWAYS in the DOM (crawlers + no-JS readers get
+   the full text); the wrapper clips it shut with the 0fr grid
+   row and opens it with the same ease as the plus rotation. */
+.faq__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 0.35s var(--ease), padding-bottom 0.35s var(--ease),
+    visibility 0s 0.35s;
+}
+.faq__item[data-open="true"] .faq__body {
+  grid-template-rows: 1fr;
+  padding-bottom: 24px;
+  visibility: visible;
+  transition: grid-template-rows 0.35s var(--ease), padding-bottom 0.35s var(--ease);
+}
 .faq__a {
-  padding: 0 4px 24px;
+  overflow: hidden;
+  min-height: 0;
+  margin: 0;
+  padding: 0 4px;
   max-width: 68ch;
   font-size: 15.5px;
   line-height: 1.65;
@@ -3408,6 +3427,19 @@ a.tick__fact:hover {
 }
 .ftr__boden p {
   margin: 0;
+}
+.ftr__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+.ftr__legal a {
+  color: var(--sf-muted-2);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.ftr__legal a:hover {
+  color: var(--sf-text);
 }
 @media (max-width: 1099px) {
   .ftr__top {

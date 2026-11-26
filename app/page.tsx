@@ -13,6 +13,7 @@ import {
 } from "@/components/Sections";
 import { IconArrow, IconCheck } from "@/components/icons";
 import {
+  discountPercent,
   fetchCategories,
   fetchProducts,
   fetchStoreConfig,
@@ -31,21 +32,75 @@ import {
  * All content is this store's own: config, catalog, prices.
  */
 export default async function HomePage() {
-  const [config, categories, featured, arrivals, finderPool] = await Promise.all([
+  const [config, categories, featured, arrivals, finderPool, catalog] = await Promise.all([
     fetchStoreConfig(),
     fetchCategories(),
     fetchProducts({ sort: "featured", limit: 4 }),
-    fetchProducts({ sort: "newest", limit: 4 }),
+    fetchProducts({ sort: "newest", limit: 12 }),
     fetchProducts({ sort: "featured", limit: 24 }),
+    fetchProducts({ sort: "newest", limit: 100 }),
   ]);
   const currency = config.currency;
   const name = storeDisplayName(config);
   const topCategories = categories.filter((c) => !c.parent);
   const tiles = categories.filter((c) => c.productsCount > 0).slice(0, 6);
-  const audioCategory = categories.find((c) => /audio/i.test(c.name) || /audio/i.test(c.slug));
+  // New Arrivals never repeats what Featured Products already
+  // shows: the featured four are removed and the row backfills
+  // with the next newest, so it stays four wide when the
+  // catalog allows.
+  const featuredIds = new Set(featured.products.map((p) => p._id));
+  const arrivalProducts = arrivals.products.filter((p) => !featuredIds.has(p._id)).slice(0, 4);
   const pool = [...featured.products, ...arrivals.products].filter(
     (p, i, arr) => arr.findIndex((x) => x._id === p._id) === i,
   );
+  // The hero lead names only categories that actually carry
+  // products right now — never a hard-coded department the
+  // catalog may not have.
+  const heroCategoryNames = tiles.slice(0, 2).map((c) => c.name);
+  const heroLead =
+    heroCategoryNames.length > 1
+      ? `Shop ${heroCategoryNames.join(" and ")} — real products, honest prices, delivered to your door.`
+      : heroCategoryNames.length === 1
+        ? `Shop ${heroCategoryNames[0]} — real products, honest prices, delivered to your door.`
+        : "Real products, honest prices, delivered to your door.";
+  // The promo banner is computed from the live catalog, never
+  // written by hand: a discount is claimed ONLY when a real
+  // product carries that compare-at saving (the true maximum,
+  // on that product's own category); with no sale running it
+  // features the fullest real category instead, and with an
+  // empty catalog it falls back to a claim the store always
+  // honours — tracked delivery.
+  const bestSaving = catalog.products
+    .map((p) => ({ product: p, pct: discountPercent(p) }))
+    .filter((x): x is { product: (typeof catalog.products)[number]; pct: number } => x.pct !== null)
+    .sort((a, b) => b.pct - a.pct)[0];
+  const fullestTile = tiles.reduce<(typeof tiles)[number] | null>(
+    (best, tile) => (best === null || tile.productsCount > best.productsCount ? tile : best),
+    null,
+  );
+  const promo = bestSaving
+    ? {
+        mark: "%",
+        heading: `Up to ${bestSaving.pct}% Off ${bestSaving.product.category?.name || "Selected Products"}`,
+        copy: `Selected ${bestSaving.product.category?.name || "products"} at their lowest prices — while stock lasts.`,
+        href: bestSaving.product.category ? `/category/${bestSaving.product.category.slug}` : "/shop",
+        cta: "Shop the Sale",
+      }
+    : fullestTile
+      ? {
+          mark: "✦",
+          heading: `New in ${fullestTile.name}`,
+          copy: `Fresh arrivals and everyday picks in ${fullestTile.name} — real stock, honest prices, and tracked delivery on every order.`,
+          href: `/category/${fullestTile.slug}`,
+          cta: `Browse ${fullestTile.name}`,
+        }
+      : {
+          mark: "✦",
+          heading: "Tracked Delivery on Every Order",
+          copy: "Every purchase is confirmed by the store's own server and tracked from checkout to your door.",
+          href: "/shop",
+          cta: "Shop Now",
+        };
   const heroProduct = pool.find((p) => p.image);
   const satellites = pool.filter((p) => p.image && p._id !== heroProduct?._id).slice(0, 3);
   const stepImages = [
@@ -80,13 +135,10 @@ export default async function HomePage() {
               <span className="hero__line">Upgrade Your</span>{" "}
               <span className="hero__line">Everyday</span>{" "}
               <span className="hero__line hero__line--grad">
-                <span className="grad-text">Tech.</span>
+                <span className="grad-text">Life.</span>
               </span>
             </h1>
-            <p className="hero__lead">
-              Headphones, speakers and everyday electronics — real products, honest prices,
-              delivered to your door.
-            </p>
+            <p className="hero__lead">{heroLead}</p>
             <div className="hero__ctas">
               <Link href="/shop" className="btn btn--primary">
                 Shop Now <IconArrow className="arr h-[18px] w-[18px]" />
@@ -156,17 +208,12 @@ export default async function HomePage() {
       <section className="sec sec--flat" aria-label="Current offer">
         <div className="wrap">
           <div className="promo" data-reveal>
-            <span className="promo__mark" aria-hidden>%</span>
+            <span className="promo__mark" aria-hidden>{promo.mark}</span>
             <div className="promo__inner">
-              <h2 className="promo__h">Up to 30% Off Audio</h2>
-              <p className="promo__x">
-                Selected headphones and speakers at their lowest prices — while stock lasts.
-              </p>
-              <Link
-                href={audioCategory ? `/category/${audioCategory.slug}` : "/shop"}
-                className="promo__cta"
-              >
-                Shop the Sale <IconArrow className="arr h-4 w-4" />
+              <h2 className="promo__h">{promo.heading}</h2>
+              <p className="promo__x">{promo.copy}</p>
+              <Link href={promo.href} className="promo__cta">
+                {promo.cta} <IconArrow className="arr h-4 w-4" />
               </Link>
             </div>
           </div>
@@ -174,7 +221,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 01 New arrivals ──────────────────────────────────── */}
-      {arrivals.products.length > 0 && (
+      {arrivalProducts.length > 0 && (
         <section className="sec sec--line" aria-labelledby="arrivals-heading">
           <div className="wrap">
             <SectionHead
@@ -191,7 +238,7 @@ export default async function HomePage() {
               split
             />
             <div className="pgrid">
-              {arrivals.products.map((product) => (
+              {arrivalProducts.map((product) => (
                 <ProductCard key={product._id} product={product} currency={currency} />
               ))}
             </div>
@@ -292,7 +339,7 @@ export default async function HomePage() {
                   Three questions. <strong>One clear recommendation.</strong>
                 </>
               }
-              lead="You do not need to be a tech expert. Answer three short questions and see which product from the live catalog fits — including its real price and stock."
+              lead="Answer three short questions and see which product from the live catalog fits — including its real price and stock."
             />
             <ul className="find__points">
               <li>
@@ -316,7 +363,7 @@ export default async function HomePage() {
       {/* ── 05 How ordering works ────────────────────────────── */}
       <StepsSection no={no()} images={stepImages} />
 
-      {featured.products.length === 0 && arrivals.products.length === 0 && (
+      {featured.products.length === 0 && arrivalProducts.length === 0 && (
         <section className="sec">
           <div className="wrap text-center">
             <p className="text-muted">The catalog is being stocked — please check back soon.</p>

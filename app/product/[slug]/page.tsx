@@ -15,7 +15,9 @@ import {
   fetchProductBySlug,
   fetchProductReviews,
   fetchProducts,
+  fetchShippingOptions,
   fetchStoreConfig,
+  formatMoney,
   storeDisplayName,
 } from "@/lib/api";
 
@@ -65,13 +67,37 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const config = await fetchStoreConfig();
   const name = storeDisplayName(config);
-  const [reviews, related, allCategories] = await Promise.all([
+  const [reviews, related, allCategories, shipping] = await Promise.all([
     fetchProductReviews(product._id),
     product.category
       ? fetchProducts({ category: product.category.slug, limit: 8, sort: "featured" })
       : Promise.resolve({ products: [], total: 0, page: 1, pages: 0 }),
     fetchCategories(),
+    fetchShippingOptions(),
   ]);
+  // The delivery line under the price tells the truth from the
+  // store's own shipping setup: the configured method names and
+  // the cheapest method's real charge as the starting price.
+  // Zones and delivery options can still change the final cost,
+  // so the line ends with the checkout caveat; with nothing
+  // configured the panel keeps its plain "calculated at
+  // checkout" note and no rates are ever invented here.
+  let deliveryNote: string | null = null;
+  if (shipping?.configured && shipping.methods.length > 0) {
+    const cheapest = shipping.methods.reduce((a, b) => (b.charge < a.charge ? b : a));
+    const names = shipping.methods.map((m) => m.name).join(" · ");
+    deliveryNote =
+      cheapest.charge > 0
+        ? `Delivery from ${formatMoney(cheapest.charge, config.currency)} — ${names}.`
+        : `Delivery available — ${names}.`;
+    if (cheapest.freeAbove) {
+      deliveryNote += ` Free with ${cheapest.name} on orders over ${formatMoney(cheapest.freeAbove, config.currency)}.`;
+    }
+    if (cheapest.estimatedDays) {
+      deliveryNote += ` Estimated ${cheapest.estimatedDays} days with ${cheapest.name}.`;
+    }
+    deliveryNote += " Final cost calculated at checkout.";
+  }
   const relatedProducts = related.products.filter((p) => p._id !== product._id).slice(0, 4);
   const category = product.category
     ? allCategories.find((c) => c.slug === product.category?.slug) || null
@@ -144,7 +170,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {product.name}
             </h1>
             <div className="mt-6">
-              <BuyPanel product={product} currency={config.currency} />
+              <BuyPanel product={product} currency={config.currency} deliveryNote={deliveryNote} />
             </div>
           </div>
         </div>

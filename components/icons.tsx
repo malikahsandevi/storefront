@@ -125,6 +125,16 @@ export function IconPhone({ className }: P) {
   );
 }
 
+/** WhatsApp glyph — the brand mark is a filled silhouette, so this
+ *  one fills instead of stroking, in the same 24px box. */
+export function IconWhatsApp({ className }: P) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M12.04 2a9.9 9.9 0 0 0-8.4 15.2L2.6 22l4.9-1a9.94 9.94 0 1 0 4.54-19Zm0 1.8a8.14 8.14 0 1 1-4.16 15.13l-.3-.18-3.1.64.66-2.95-.2-.31A8.14 8.14 0 0 1 12.04 3.8Zm-3.1 4.06c-.17 0-.45.06-.68.31-.23.26-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.6.13.17 1.75 2.8 4.4 3.8 2.2.83 2.64.67 3.12.56.48-.11 1.56-.64 1.78-1.26.22-.62.22-1.15.15-1.26-.07-.1-.25-.17-.53-.26-.27-.1-1.6-.79-1.85-.88-.25-.09-.43-.13-.61.14-.18.27-.7.86-.86 1.04-.16.18-.32.2-.6.07-.28-.14-1.17-.58-2.23-1.38-.82-.61-1.38-1.37-1.54-1.6-.16-.24-.02-.37.12-.49.13-.12.27-.31.41-.47.14-.16.18-.27.27-.46.09-.18.05-.35-.02-.49-.07-.14-.62-1.5-.85-2.04-.22-.5-.44-.44-.61-.44Z" />
+    </svg>
+  );
+}
+
 export function IconClose({ className }: P) {
   return (
     <svg {...base} className={className}>

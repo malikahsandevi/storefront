@@ -81,7 +81,18 @@ export function ProductGallery({ product }: { product: CatalogProduct }) {
  * drawer, the wishlist as a ghost pill beside it, and the rating
  * line closing the box.
  */
-export function BuyPanel({ product, currency }: { product: CatalogProduct; currency: string }) {
+export function BuyPanel({
+  product,
+  currency,
+  deliveryNote,
+}: {
+  product: CatalogProduct;
+  currency: string;
+  /** The truthful delivery line under the price, computed by the
+   *  page from the store's configured shipping methods; absent
+   *  (unconfigured) the panel keeps the plain checkout note. */
+  deliveryNote?: string | null;
+}) {
   const { addToCart, toggleWishlist, isWishlisted } = useShop();
   const { setOpen } = useCartUI();
   const [qty, setQty] = useState(1);
@@ -106,7 +117,9 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
           </span>
         )}
       </div>
-      <p className="mt-2.5 text-[13px] text-muted-2">Shipping calculated at checkout.</p>
+      <p className="mt-2.5 text-[13px] text-muted-2">
+        {deliveryNote || "Shipping calculated at checkout."}
+      </p>
       <p className={`mt-3.5 flex items-center gap-2 text-sm font-medium ${out ? "text-primary" : "text-emerald-400"}`}>
         <span aria-hidden className={`h-2 w-2 rounded-full ${out ? "bg-primary" : "bg-emerald-400"}`} />
         {out ? "Out of stock" : `In stock — ${product.stock} available`}
