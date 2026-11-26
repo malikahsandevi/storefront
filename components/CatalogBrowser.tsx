@@ -1,5 +1,6 @@
 import Link from "next/link";
 import CustomSelect from "./CustomSelect";
+import FilterBar from "./FilterBar";
 import ProductCard from "./ProductCard";
 import type { CatalogCategory, CatalogProduct } from "@/lib/api";
 
@@ -61,9 +62,16 @@ export default function CatalogBrowser({
   lockedCategory?: string;
 }) {
   const topCategories = categories.filter((c) => !c.parent);
+  const activeCount =
+    (filters.q ? 1 : 0) +
+    (!lockedCategory && filters.category ? 1 : 0) +
+    (filters.min ? 1 : 0) +
+    (filters.max ? 1 : 0) +
+    (filters.sort && filters.sort !== "newest" ? 1 : 0);
 
   return (
     <div>
+      <FilterBar activeCount={activeCount}>
       <form
         method="get"
         action={basePath}
@@ -115,6 +123,7 @@ export default function CatalogBrowser({
           </Link>
         </div>
       </form>
+      </FilterBar>
 
       {!lockedCategory && topCategories.length > 0 && (
         <nav aria-label="Categories" className="mt-5 flex flex-wrap items-center gap-2">

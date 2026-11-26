@@ -138,7 +138,7 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
         </fieldset>
       ))}
 
-      <div className="mt-8 flex flex-wrap items-stretch gap-3">
+      <div className="buyrow mt-8 flex flex-wrap items-stretch gap-3">
         <div className="stepper">
           <button
             type="button"
@@ -169,8 +169,8 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
           }}
           className={
             out
-              ? "btn flex-1 cursor-not-allowed bg-surface-2 text-muted-2 shadow-none"
-              : "btn btn--primary flex-1"
+              ? "btn buyrow__add flex-1 cursor-not-allowed bg-surface-2 text-muted-2 shadow-none"
+              : "btn btn--primary buyrow__add flex-1"
           }
         >
           {out ? "Out of Stock" : added ? "Added to Cart ✓" : "Add to Cart"}
@@ -179,7 +179,7 @@ export function BuyPanel({ product, currency }: { product: CatalogProduct; curre
           type="button"
           onClick={() => toggleWishlist(product)}
           aria-pressed={wishlisted}
-          className={`btn ${wishlisted ? "btn--primary" : "btn--ghost"}`}
+          className={`btn buyrow__wish ${wishlisted ? "btn--primary" : "btn--ghost"}`}
         >
           {wishlisted ? "♥ Wishlisted" : "♡ Wishlist"}
         </button>

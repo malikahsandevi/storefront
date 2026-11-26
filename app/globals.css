@@ -434,6 +434,14 @@ a.panel:hover {
   border-color: var(--sf-primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--sf-primary) 22%, transparent);
 }
+/* Phones: fields render at 16px so iOS Safari does not auto-zoom
+   the page on focus (its threshold is 16px; the desktop 15px made
+   every form on a real phone lurch on tap). */
+@media (max-width: 749px) {
+  .input {
+    font-size: 16px;
+  }
+}
 /* No browser-default widgets anywhere (Ahsan's standing rule):
    number fields lose their native spinner arrows, search fields
    lose the native clear button — the site's own steppers and
@@ -451,6 +459,62 @@ input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* ── Filter bar phone collapse (components/FilterBar.tsx) ───────
+   The toggle exists only on phones; on desktop the facet form is
+   always fully visible, exactly as before. The toggle wears the
+   panel's own surface so the pair reads as one component. */
+.filterbar__toggle {
+  display: none;
+}
+@media (max-width: 749px) {
+  .filterbar__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 18px;
+    border: 1px solid var(--sf-line);
+    border-radius: var(--radius);
+    background: var(--panel-grad);
+    color: var(--sf-text);
+    cursor: pointer;
+  }
+  .filterbar__label {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .filterbar__count {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sf-primary);
+  }
+  .filterbar__chev {
+    width: 18px;
+    height: 18px;
+    color: var(--sf-muted);
+    transition: transform 0.25s ease;
+  }
+  .filterbar__chev--open {
+    transform: rotate(180deg);
+  }
+  .filterbar__body {
+    margin-top: 12px;
+  }
+  .filterbar__body--closed {
+    display: none;
+  }
 }
 
 /* ── Custom select (components/CustomSelect.tsx) ─────────────────
@@ -648,6 +712,21 @@ input.rdo:focus-visible {
   min-width: 32px;
   text-align: center;
   font-weight: 600;
+}
+
+/* Product buy row on phones: stepper + wishlist share the first
+   line, Add to Cart gets a full-width line of its own — in one
+   row the three controls squeeze the primary button until its
+   label clips ("D TO CA…"). Desktop keeps the single row. */
+@media (max-width: 749px) {
+  .buyrow__wish {
+    order: 2;
+    flex: 1;
+  }
+  .buyrow__add {
+    order: 3;
+    flex: 1 1 100%;
+  }
 }
 
 /* Check icon list */
@@ -1162,7 +1241,12 @@ a.tick__fact:hover {
   .pgrid::-webkit-scrollbar {
     display: none;
   }
-  .pgrid > * {
+  /* .card (not *) — the card's own `flex: 1` shorthand sits later
+     in this file at equal specificity to `.pgrid > *` and silently
+     reset the basis to 0%, crushing the rail's cards into equal
+     slivers instead of the intended 82% snap cards (the same trap
+     .likerow > .card already guards against). */
+  .pgrid > .card {
     flex: 0 0 82%;
     scroll-snap-align: start;
   }
