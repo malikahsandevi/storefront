@@ -109,29 +109,25 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  // Read the returned order's real state: signed-in customers via
-  // their account order view; guests via order tracking with the
-  // email stashed before the redirect. One delayed re-read on the
-  // success landing, because the webhook may land a moment later —
-  // the status shown is always the backend's, never a guess.
+  // Read the returned order's real state through the customer's
+  // account order view. There is NO guest read any more: order
+  // lookups are account-only (tracking went login-only, Ahsan
+  // 2026-11-26), so a landing whose session is gone shows the
+  // order number plus a sign-in prompt for the status — and the
+  // moment the visitor signs in, this effect re-runs and the real
+  // status lands. The read waits for the session check to settle
+  // (a returning customer's stored session validates a beat after
+  // the page loads). One delayed re-read on the success landing,
+  // because the webhook may land a moment later — the status
+  // shown is always the backend's, never a guess.
   useEffect(() => {
-    if (!landing) return;
+    if (!landing || !ready) return;
     let stale = false;
     const readStatus = async () => {
-      if (user) {
-        return apiCall<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number }>(
-          "GET", `/api/storefront/me/orders/${landing.orderId}`, undefined, user.token,
-        );
-      }
-      try {
-        const stash = JSON.parse(sessionStorage.getItem("stripe-return") || "null");
-        if (stash?.orderNumber && stash?.email) {
-          return await apiCall<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number }>(
-            "POST", "/api/storefront/track", { orderNumber: stash.orderNumber, email: stash.email },
-          );
-        }
-      } catch { /* fall through to the number-only panel */ }
-      return null;
+      if (!user) return null;
+      return apiCall<{ orderNumber: string; status: string; paymentStatus: string; paymentMethod: string; total: number }>(
+        "GET", `/api/storefront/me/orders/${landing.orderId}`, undefined, user.token,
+      );
     };
     (async () => {
       let data: Awaited<ReturnType<typeof readStatus>> = null;
@@ -150,7 +146,7 @@ export default function CheckoutPage() {
       }
     })();
     return () => { stale = true; };
-  }, [landing, user]);
+  }, [landing, user, ready]);
 
   // Mount the Payment Element when the payment step opens:
   // Stripe.js loads from js.stripe.com with the shop's
@@ -341,6 +337,13 @@ export default function CheckoutPage() {
               <div className="flex justify-between"><dt className="text-muted">Payment</dt><dd className="text-cream">{landingOrder.paymentMethod} ({landingOrder.paymentStatus})</dd></div>
               <div className="flex justify-between"><dt className="text-muted">Status</dt><dd className="text-cream">{landingOrder.status}</dd></div>
             </dl>
+          ) : !user && ready ? (
+            <div className="mt-4">
+              <p className="text-sm text-muted">Sign in to see the latest status of your order.</p>
+              <button type="button" className="btn btn--ghost btn--sm mt-4" onClick={() => openAuth("login")}>
+                Sign In
+              </button>
+            </div>
           ) : (
             <p className="mt-4 text-sm text-muted">{landingDone ? "Use order tracking to see the latest status of your order." : "Loading your order…"}</p>
           )}
@@ -431,7 +434,7 @@ export default function CheckoutPage() {
           <h1 className="h1-page mt-6">Order placed — thank you!</h1>
           <p className="mt-4 text-muted">
             Your order number is <span className="font-bold text-cream">{placed.orderNumber}</span>.
-            Keep it safe — you can track your order any time with this number and your email.
+            Keep it safe — you can track your order any time: sign in and enter this number.
           </p>
           <dl className="panel mx-auto mt-7 max-w-sm space-y-2.5 px-6 py-6 text-left text-sm">
             <div className="flex justify-between"><dt className="text-muted">Total</dt><dd className="font-bold text-cream">{formatMoney(placed.total, currency)}</dd></div>
@@ -482,17 +485,10 @@ export default function CheckoutPage() {
         // cannot mount, so skip straight to the honest line.
         setPayError("Online payment could not be started — your order is placed but unpaid.");
       } else if (stripeOnline) {
-        // Stash what the status re-read needs to find this order
-        // as a guest afterwards (order number + email for
-        // tracking) — the embedded flow re-reads through the
-        // same landing machinery a hosted return would.
-        try {
-          sessionStorage.setItem("stripe-return", JSON.stringify({
-            orderId: order._id,
-            orderNumber: order.orderNumber,
-            email: user?.email || email,
-          }));
-        } catch { /* the re-read falls back to the order number alone */ }
+        // The embedded flow hands off to the same landing
+        // machinery a hosted return would; its status re-read
+        // runs through the account (order lookups are
+        // account-only now), so nothing needs stashing.
         try {
           const intent = await apiCall<{ clientSecret: string }>(
             "POST", `/api/storefront/orders/${order._id}/stripe-intent`, {}, user?.token,

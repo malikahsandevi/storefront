@@ -94,7 +94,7 @@ const STEPS = [
   {
     hash: "Step 03 · Delivery",
     title: "Track your delivery",
-    text: "Every order gets a number. Follow it any time with that number and your email — no account needed.",
+    text: "Every order gets a number. Sign in and follow it any time with that number.",
     href: "/track-order",
     link: "Track an order",
   },
@@ -173,7 +173,7 @@ export function VerifyLedger({
   const rows: { label: string; value: string; href: string; action: string }[] = [
     {
       label: "Order tracking",
-      value: "Every order can be tracked with its order number and the email it was placed with — no account needed.",
+      value: "Every order can be tracked from your account with its order number — sign in and it is looked up with your own email.",
       href: "/track-order",
       action: "Track an order",
     },
@@ -390,7 +390,7 @@ export function faqItems(config: StoreConfig): { q: string; a: string }[] {
     },
     {
       q: "How do I track my order?",
-      a: "Every order gets an order number. Open Track Your Order and enter that number with the email you ordered with — no account needed. Once your order ships, the courier and its tracking link appear there too.",
+      a: "Every order gets an order number. Sign in with the account you ordered with, open Track Your Order and enter that number. Once your order ships, the courier and its tracking link appear there too.",
     },
     {
       q: "How is shipping calculated?",

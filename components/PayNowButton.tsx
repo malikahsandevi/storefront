@@ -9,19 +9,16 @@ import { apiCall } from "@/lib/api";
  *  page. Rendered only when the backend says the order can still be
  *  paid online (canPayOnline) — the button never guesses.
  *
- *  Guests paying from order tracking pass `stash` (the order number +
- *  email they just proved) so the /checkout return landing can read
- *  the order's real status afterwards, exactly as a checkout-started
- *  payment does. */
+ *  Tracking and the account pages are both signed-in surfaces now,
+ *  so the /checkout return landing re-reads the order through the
+ *  account — nothing needs to be stashed for a guest lookup. */
 export default function PayNowButton({
   orderId,
   token,
-  stash,
   label = "Pay Now",
 }: {
   orderId: string;
   token?: string;
-  stash?: { orderNumber: string; email: string };
   label?: string;
 }) {
   const [busy, setBusy] = useState(false);
@@ -31,9 +28,6 @@ export default function PayNowButton({
     setBusy(true);
     setError("");
     try {
-      if (stash) {
-        sessionStorage.setItem("stripe-return", JSON.stringify(stash));
-      }
       const { url } = await apiCall<{ url: string }>(
         "POST", `/api/storefront/orders/${orderId}/stripe-session`, {}, token,
       );
