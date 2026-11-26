@@ -2,31 +2,70 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiCall, formatMoney } from "@/lib/api";
+import { apiCall, formatMoney, type CatalogProduct } from "@/lib/api";
 import { useShop, type ProductLike } from "@/lib/store";
 import { useCartUI } from "@/components/CartDrawer";
+import ProductCard from "@/components/ProductCard";
+import SectionHead from "@/components/SectionHead";
 
 /** Wishlist: the previous build's server-mirrored entries, shown
- *  as vault cards; adding to cart pops the cart drawer. */
+ *  as vault cards; adding to cart pops the cart drawer. Below the
+ *  list — and under the empty state, filling its void — a
+ *  "You may also like these" rail (Ahsan, 2026-11-26): real
+ *  catalog products (the newest published, the home page's own
+ *  arrivals source), one line of house ProductCards, sideways-
+ *  scrolling on small screens, and never a product the visitor
+ *  has already saved. */
 export default function WishlistPage() {
   const { wishlist, toggleWishlist, addToCart } = useShop();
   const { setOpen } = useCartUI();
   const [currency, setCurrency] = useState("USD");
+  const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
 
   useEffect(() => {
     apiCall<{ currency: string }>("GET", "/api/storefront/config")
       .then((config) => setCurrency(config.currency || "USD"))
       .catch(() => {});
+    apiCall<{ products: CatalogProduct[] }>("GET", "/api/storefront/products?sort=newest&limit=8")
+      .then((res) => setCatalog(res.products || []))
+      .catch(() => {});
   }, []);
+
+  const suggestions = catalog
+    .filter((product) => !wishlist.some((entry) => entry.productId === product._id))
+    .slice(0, 4);
+
+  const rail = suggestions.length > 0 ? (
+    <section className="mt-16" aria-labelledby="also-like-heading">
+      <SectionHead
+        no="02"
+        label="More to explore"
+        title={
+          <>
+            You may also <strong>like these</strong>
+          </>
+        }
+        id="also-like-heading"
+      />
+      <div className="likerow mt-9">
+        {suggestions.map((product) => (
+          <ProductCard key={product._id} product={product} currency={currency} />
+        ))}
+      </div>
+    </section>
+  ) : null;
 
   if (wishlist.length === 0) {
     return (
-      <div className="wrap py-16 text-center">
-        <h1 className="h1-page">Wishlist</h1>
-        <p className="mt-4 text-muted">You have not saved any products yet.</p>
-        <Link href="/shop" className="btn btn--primary mt-7">
-          Browse Products
-        </Link>
+      <div className="wrap py-12 md:py-16">
+        <div className="py-6 text-center">
+          <h1 className="h1-page">Wishlist</h1>
+          <p className="mt-4 text-muted">You have not saved any products yet.</p>
+          <Link href="/shop" className="btn btn--primary mt-7">
+            Browse Products
+          </Link>
+        </div>
+        {rail}
       </div>
     );
   }
@@ -110,6 +149,7 @@ export default function WishlistPage() {
           );
         })}
       </div>
+      {rail}
     </div>
   );
 }
