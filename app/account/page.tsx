@@ -24,6 +24,12 @@ export default function AccountPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwMessage, setPwMessage] = useState("");
+  const [pwError, setPwError] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
     if (ready && !user) router.replace("/login");
@@ -85,6 +91,40 @@ export default function AccountPage() {
 
   const updateAddress = (index: number, patch: Partial<CustomerAddress>) =>
     setAddresses((prev) => prev.map((a, i) => (i === index ? { ...a, ...patch } : a)));
+
+  // Password change is its own form + endpoint: the current password
+  // is the credential, so it never rides along with the profile save.
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError("");
+    setPwMessage("");
+    if (newPassword.length < 6) {
+      setPwError("The new password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError("The two passwords do not match.");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const res = await apiCall<{ message: string }>("PUT", "/api/storefront/me/password", {
+        currentPassword, newPassword,
+      }, user.token);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPwMessage(res.message || "Your password has been changed.");
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        expireSession();
+        return;
+      }
+      setPwError(err instanceof Error ? err.message : "Could not change your password.");
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   return (
     <div className="wrap max-w-5xl py-12 md:py-16">
@@ -209,6 +249,35 @@ export default function AccountPage() {
         <button type="submit" disabled={saving} className="btn btn--primary disabled:opacity-60">
           {saving ? "Saving…" : "Save Changes"}
         </button>
+      </form>
+
+      <form onSubmit={changePassword} className="mt-6">
+        <section className="panel panel--pad" aria-labelledby="pw-h">
+          <p className="kicker">
+            <span className="kicker__idx">03</span>
+            <span className="kicker__bar" aria-hidden />
+          </p>
+          <h2 id="pw-h" className="mt-3 font-display text-xl font-medium text-cream">Password</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div>
+              <label htmlFor="ac-pw-current" className="flabel">Current password</label>
+              <input id="ac-pw-current" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="input" autoComplete="current-password" />
+            </div>
+            <div>
+              <label htmlFor="ac-pw-new" className="flabel">New password</label>
+              <input id="ac-pw-new" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="input" autoComplete="new-password" />
+            </div>
+            <div>
+              <label htmlFor="ac-pw-confirm" className="flabel">Confirm new password</label>
+              <input id="ac-pw-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="input" autoComplete="new-password" />
+            </div>
+          </div>
+          {pwError && <p className="mt-4 text-sm text-primary" role="alert">{pwError}</p>}
+          {pwMessage && <p className="mt-4 text-sm text-emerald-400" role="status">{pwMessage}</p>}
+          <button type="submit" disabled={pwSaving} className="btn btn--primary mt-5 disabled:opacity-60">
+            {pwSaving ? "Changing…" : "Change Password"}
+          </button>
+        </section>
       </form>
     </div>
   );

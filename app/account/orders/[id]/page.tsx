@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiCall, ApiError, formatMoney, type MyOrder } from "@/lib/api";
 import { useShop } from "@/lib/store";
+import PayNowButton from "@/components/PayNowButton";
 
 /** One order, in full: the previous build's fetch and fields,
  *  vault panels with the status as a solid accent pill. */
@@ -111,6 +112,15 @@ export default function MyOrderDetailPage() {
           </div>
         </dl>
       </section>
+
+      {order.canPayOnline && (
+        <section className="panel panel--pad mt-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted">
+            This order is placed but <span className="font-semibold text-cream">not yet paid</span> — complete the payment to finish it.
+          </p>
+          <PayNowButton orderId={order._id} token={user.token} />
+        </section>
+      )}
 
       {order.shippingAddress && (
         <section className="panel panel--pad mt-5">

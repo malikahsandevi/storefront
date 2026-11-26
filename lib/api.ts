@@ -125,6 +125,9 @@ export interface PlacedOrder {
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  /** Backend-computed: this order can still be paid online right now
+   *  (unpaid, live, card method, gateway configured). */
+  canPayOnline?: boolean;
   subtotal: number;
   discount: number;
   shippingCost: number;
@@ -177,6 +180,9 @@ export interface MyOrder {
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  /** Backend-computed: this order can still be paid online right now
+   *  (unpaid, live, card method, gateway configured). */
+  canPayOnline?: boolean;
   items: { name: string; price: number; quantity: number; image: string }[];
   subtotal: number;
   discount: number;

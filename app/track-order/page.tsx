@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiCall, formatMoney, type TrackedOrder } from "@/lib/api";
+import PayNowButton from "@/components/PayNowButton";
 
 /** Order tracking: the previous build's lookup (order number +
  *  email, both must match) and result content, in the vault panel
@@ -115,6 +116,15 @@ export default function TrackOrderPage() {
               <dd>{formatMoney(order.total, currency)}</dd>
             </div>
           </dl>
+
+          {order.canPayOnline && (
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-ink-2 p-5">
+              <p className="text-sm text-muted">
+                This order is placed but <span className="font-semibold text-cream">not yet paid</span>.
+              </p>
+              <PayNowButton orderId={order._id} stash={{ orderNumber: order.orderNumber, email: email.trim() }} />
+            </div>
+          )}
 
           {(order.shipment.trackingNumber || order.shipment.shippedAt) && (
             <div className="mt-6 rounded-2xl border border-line bg-ink-2 p-5 text-sm">

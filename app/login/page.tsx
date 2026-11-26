@@ -48,6 +48,9 @@ export default function LoginPage() {
         <div>
           <label htmlFor="li-password" className="flabel">Password *</label>
           <input id="li-password" required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" autoComplete="current-password" />
+          <p className="mt-2 text-right text-sm">
+            <Link href="/forgot-password" className="font-semibold text-primary transition hover:text-cream">Forgot password?</Link>
+          </p>
         </div>
         {error && <p className="text-sm text-primary" role="alert">{error}</p>}
         <button type="submit" disabled={busy} className="btn btn--primary btn--block disabled:opacity-60">
