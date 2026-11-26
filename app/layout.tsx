@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito_Sans, Outfit } from "next/font/google";
 import "./globals.css";
+import AuthModal from "@/components/AuthModal";
 import CartDrawer, { CartUIProvider } from "@/components/CartDrawer";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -111,6 +112,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <main className="w-full flex-1">{children}</main>
             <Footer config={config} categories={categories} />
             <CartDrawer />
+            <AuthModal />
           </CartUIProvider>
         </ShopProvider>
         <Motion />

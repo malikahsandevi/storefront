@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FooterAuthLinks from "./FooterAuthLinks";
 import Year from "./Year";
 import { storeDisplayName, type CatalogCategory, type StoreConfig } from "@/lib/api";
 import { IconCheck, IconMail, IconPhone } from "./icons";
@@ -82,8 +83,7 @@ export default function Footer({
             <nav className="ftr__col" aria-label="Account">
               <p className="ftr__titel">Account</p>
               <ul>
-                <li><Link href="/login">Sign In</Link></li>
-                <li><Link href="/register">Create Account</Link></li>
+                <FooterAuthLinks />
                 <li><Link href="/account">My Account</Link></li>
                 <li><Link href="/account/orders">My Orders</Link></li>
                 <li><Link href="/wishlist">Wishlist</Link></li>

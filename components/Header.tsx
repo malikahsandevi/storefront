@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
+import { apiCall, formatMoney, type CatalogCategory, type CatalogProduct } from "@/lib/api";
 import { useShop } from "@/lib/store";
 import { useCartUI } from "./CartDrawer";
 import { IconArrow, IconBag, IconCaretDown, IconChevron, IconHeart, IconMoon, IconSearch, IconSun, IconUser } from "./icons";
@@ -80,7 +80,7 @@ export default function Header({
    *  switch's starting point before any visitor choice applies. */
   defaultMode: string;
 }) {
-  const { cartCount, wishlist, user, ready } = useShop();
+  const { cartCount, wishlist, user, ready, openAuth } = useShop();
   const { setOpen: setCartOpen } = useCartUI();
   const router = useRouter();
 
@@ -112,6 +112,43 @@ export default function Header({
   };
   const [term, setTerm] = useState("");
   const [panel, setPanel] = useState<"none" | "search" | "menu">("none");
+  // Live results inside the search panel (Ahsan, 2026-11-26:
+  // "results search bar box me show krwo") — as the visitor
+  // types, matching products appear right under the input,
+  // queried debounced from the same catalog search the
+  // /shop?q= page reads. Enter still goes to the full page.
+  const [searchResults, setSearchResults] = useState<CatalogProduct[] | null>(null);
+  const [searchBusy, setSearchBusy] = useState(false);
+  const searchSeqRef = useRef(0);
+  useEffect(() => {
+    if (panel !== "search") return;
+    const q = term.trim();
+    const seq = (searchSeqRef.current += 1);
+    const timer = setTimeout(() => {
+      if (searchSeqRef.current !== seq) return;
+      if (!q) {
+        setSearchResults(null);
+        setSearchBusy(false);
+        return;
+      }
+      setSearchBusy(true);
+      apiCall<{ products: CatalogProduct[] }>(
+        "GET",
+        `/api/storefront/products?search=${encodeURIComponent(q)}&limit=6`,
+      )
+        .then((res) => {
+          if (searchSeqRef.current !== seq) return;
+          setSearchResults(res.products);
+          setSearchBusy(false);
+        })
+        .catch(() => {
+          if (searchSeqRef.current !== seq) return;
+          setSearchResults([]);
+          setSearchBusy(false);
+        });
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [term, panel]);
   // The hover mega panel's category (desktop nav) — null when shut.
   const [mega, setMega] = useState<string | null>(null);
   const topCategories = categories.filter((c) => !c.parent);
@@ -424,9 +461,11 @@ export default function Header({
       storeName
     );
 
-  const tailLinks: { href: string; label: string }[] = [
+  const tailLinks: { href: string; label: string; auth?: boolean }[] = [
     { href: "/wishlist", label: "Wishlist" },
-    { href: user ? "/account" : "/login", label: user ? "My Account" : "Sign In" },
+    user
+      ? { href: "/account", label: "My Account" }
+      : { href: "/login", label: "Sign In", auth: true },
   ];
 
   // Mobile menu rows: main entries keep the panel's sequential
@@ -434,12 +473,13 @@ export default function Header({
   // as indented rows (no hover on touch — they must be reachable).
   const menuRows = (() => {
     let n = 0;
-    const main = (href: string, label: string) => ({
+    const main = (href: string, label: string, auth = false) => ({
       href,
       label,
       sub: false,
       idx: String(++n).padStart(2, "0"),
       depth: 0,
+      auth,
     });
     const sub = (href: string, label: string, depth: number) => ({
       href,
@@ -447,6 +487,7 @@ export default function Header({
       sub: true,
       idx: "–",
       depth,
+      auth: false,
     });
     // Recursive walk: every descendant sits under its main category
     // as an indented row, so deeper levels stay reachable without
@@ -462,7 +503,7 @@ export default function Header({
         main(`/category/${category.slug}`, category.name),
         ...walkSubs(category._id, 1),
       ]),
-      ...tailLinks.map((link) => main(link.href, link.label)),
+      ...tailLinks.map((link) => main(link.href, link.label, link.auth)),
     ];
   })();
 
@@ -639,9 +680,9 @@ export default function Header({
                 <IconUser />
               </Link>
             ) : ready ? (
-              <Link href="/login" className="hdr__login">
+              <button type="button" className="hdr__login" onClick={() => openAuth("login")}>
                 Login
-              </Link>
+              </button>
             ) : (
               <span className="hdr__icon" aria-hidden>
                 <IconUser />
@@ -649,7 +690,7 @@ export default function Header({
             )}
             <button
               type="button"
-              className="hdr__icon"
+              className="hdr__icon hdr__theme-toggle"
               aria-label={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               onClick={toggleMode}
             >
@@ -676,26 +717,80 @@ export default function Header({
                   placeholder="Search products…"
                   aria-label="Search products"
                   autoFocus
-                  className="w-full border-0 bg-transparent text-base text-cream shadow-none outline-none placeholder:text-muted-2 focus:shadow-none"
+                  className="hdr__search-input w-full border-0 bg-transparent text-base text-cream shadow-none outline-none placeholder:text-muted-2 focus:shadow-none"
                 />
                 <button type="submit" className="btn btn--primary btn--sm shrink-0">
                   Search
                 </button>
               </form>
-              {topCategories.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 border-t border-line px-6 py-4">
-                  <span className="mono-label mr-1 text-muted-2">Browse</span>
-                  {topCategories.slice(0, 6).map((category) => (
-                    <Link
-                      key={category._id}
-                      href={`/category/${category.slug}`}
-                      className="chip transition hover:border-primary"
-                      onClick={() => setPanel("none")}
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
+              {term.trim() ? (
+                <div className="hdr__search-results">
+                  {searchBusy && !searchResults ? (
+                    <p className="hdr__search-note">Searching…</p>
+                  ) : searchResults && searchResults.length > 0 ? (
+                    <>
+                      <ul>
+                        {searchResults.map((product) => {
+                          const thumb =
+                            product.image ||
+                            product.images?.find((img) => img.isMain)?.url ||
+                            product.images?.[0]?.url ||
+                            "";
+                          return (
+                            <li key={product._id}>
+                              <Link
+                                href={`/product/${product.slug}`}
+                                className="hdr__search-row"
+                                onClick={() => setPanel("none")}
+                              >
+                                <span className="hdr__search-thumb">
+                                  {thumb ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={thumb} alt="" loading="lazy" />
+                                  ) : (
+                                    <span aria-hidden>{product.name.charAt(0)}</span>
+                                  )}
+                                </span>
+                                <span className="hdr__search-name">{product.name}</span>
+                                <span className="hdr__search-price">
+                                  {formatMoney(product.price, currency)}
+                                </span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <Link
+                        href={`/shop?q=${encodeURIComponent(term.trim())}`}
+                        className="hdr__search-foot"
+                        onClick={() => setPanel("none")}
+                      >
+                        <span>See all results for &ldquo;{term.trim()}&rdquo;</span>
+                        <IconArrow className="h-4 w-4 shrink-0" />
+                      </Link>
+                    </>
+                  ) : (
+                    <p className="hdr__search-note">
+                      No products match &ldquo;{term.trim()}&rdquo;.
+                    </p>
+                  )}
                 </div>
+              ) : (
+                topCategories.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 border-t border-line px-6 py-4">
+                    <span className="mono-label mr-1 text-muted-2">Browse</span>
+                    {topCategories.slice(0, 6).map((category) => (
+                      <Link
+                        key={category._id}
+                        href={`/category/${category.slug}`}
+                        className="chip transition hover:border-primary"
+                        onClick={() => setPanel("none")}
+                      >
+                        {category.name}
+                      </Link>
+                    ))}
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -758,17 +853,24 @@ export default function Header({
                     onClick={() => closeMega()}
                   >
                     <span className="hdr__mega-feat-media">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={
-                          megaProduct.image ||
-                          megaProduct.images?.find((img) => img.isMain)?.url ||
-                          megaProduct.images?.[0]?.url ||
-                          ""
-                        }
-                        alt={megaProduct.name}
-                        loading="lazy"
-                      />
+                      {megaProduct.image ||
+                      megaProduct.images?.find((img) => img.isMain)?.url ||
+                      megaProduct.images?.[0]?.url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={
+                            megaProduct.image ||
+                            megaProduct.images?.find((img) => img.isMain)?.url ||
+                            megaProduct.images?.[0]?.url
+                          }
+                          alt={megaProduct.name}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="hdr__mega-feat-initial" aria-hidden>
+                          {megaProduct.name.charAt(0)}
+                        </span>
+                      )}
                     </span>
                     {(megaProduct.brand?.name || megaProduct.category?.name) && (
                       <span className="hdr__mega-feat-tag">
@@ -791,23 +893,41 @@ export default function Header({
           <div className="hdr__panel">
             <div className="hdr__panel-card">
               <nav className="hdr__mobile-links" aria-label="Menu">
-                {menuRows.map((row) => (
-                  <Link
-                    key={row.href}
-                    href={row.href}
-                    className={row.sub ? "hdr__mobile-sublink" : undefined}
-                    style={
-                      row.sub && row.depth > 1
-                        ? { paddingLeft: 46 + (row.depth - 1) * 20 }
-                        : undefined
-                    }
-                    onClick={() => setPanel("none")}
-                  >
-                    <span className="idx" aria-hidden>{row.idx}</span>
-                    <span>{row.label}</span>
-                    <IconArrow className="h-4 w-4 text-primary" />
-                  </Link>
-                ))}
+                {menuRows.map((row) =>
+                  row.auth ? (
+                    // Sign In opens the auth POPUP (there is no
+                    // login page any more) and shuts the menu.
+                    <button
+                      key="auth-signin"
+                      type="button"
+                      className="hdr__mobile-authrow"
+                      onClick={() => {
+                        setPanel("none");
+                        openAuth("login");
+                      }}
+                    >
+                      <span className="idx" aria-hidden>{row.idx}</span>
+                      <span>{row.label}</span>
+                      <IconArrow className="h-4 w-4 text-primary" />
+                    </button>
+                  ) : (
+                    <Link
+                      key={row.href}
+                      href={row.href}
+                      className={row.sub ? "hdr__mobile-sublink" : undefined}
+                      style={
+                        row.sub && row.depth > 1
+                          ? { paddingLeft: 46 + (row.depth - 1) * 20 }
+                          : undefined
+                      }
+                      onClick={() => setPanel("none")}
+                    >
+                      <span className="idx" aria-hidden>{row.idx}</span>
+                      <span>{row.label}</span>
+                      <IconArrow className="h-4 w-4 text-primary" />
+                    </Link>
+                  ),
+                )}
                 {/* The visitor's own theme switch, reachable on
                     mobile too — same behaviour as the header icon:
                     flips this device only, the menu stays open so

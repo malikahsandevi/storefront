@@ -10,16 +10,21 @@ import PayNowButton from "@/components/PayNowButton";
 /** One order, in full: the previous build's fetch and fields,
  *  vault panels with the status as a solid accent pill. */
 export default function MyOrderDetailPage() {
-  const { user, ready, expireSession } = useShop();
+  const { user, ready, expireSession, openAuth } = useShop();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const [order, setOrder] = useState<MyOrder | null>(null);
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
 
+  // No valid session: home with the sign-in POPUP open,
+  // remembering this order's page (see app/account/page.tsx).
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
-  }, [ready, user, router]);
+    if (ready && !user) {
+      openAuth("login", params?.id ? `/account/orders/${params.id}` : "/account/orders");
+      router.replace("/");
+    }
+  }, [ready, user, openAuth, router, params]);
 
   useEffect(() => {
     apiCall<{ currency: string }>("GET", "/api/storefront/config")
@@ -40,7 +45,7 @@ export default function MyOrderDetailPage() {
   }, [user, params, expireSession]);
 
   if (!ready) return <p className="wrap py-16 text-center text-muted">Loading…</p>;
-  if (!user) return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
+  if (!user) return <p className="wrap py-16 text-center text-muted">Opening sign in…</p>;
   if (error) {
     return (
       <div className="wrap py-16 text-center">

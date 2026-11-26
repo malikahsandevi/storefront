@@ -9,15 +9,20 @@ import { useShop } from "@/lib/store";
 /** My Orders list: the previous build's fetch (/me/orders with
  *  the session token), rows as vault panels. */
 export default function MyOrdersPage() {
-  const { user, ready, expireSession } = useShop();
+  const { user, ready, expireSession, openAuth } = useShop();
   const router = useRouter();
   const [orders, setOrders] = useState<MyOrder[] | null>(null);
   const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState("");
 
+  // No valid session: home with the sign-in POPUP open,
+  // remembering this page (see app/account/page.tsx).
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
-  }, [ready, user, router]);
+    if (ready && !user) {
+      openAuth("login", "/account/orders");
+      router.replace("/");
+    }
+  }, [ready, user, openAuth, router]);
 
   useEffect(() => {
     apiCall<{ currency: string }>("GET", "/api/storefront/config")
@@ -38,7 +43,7 @@ export default function MyOrdersPage() {
   }, [user, expireSession]);
 
   if (!ready) return <p className="wrap py-16 text-center text-muted">Loading…</p>;
-  if (!user) return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
+  if (!user) return <p className="wrap py-16 text-center text-muted">Opening sign in…</p>;
 
   return (
     <div className="wrap max-w-4xl py-12 md:py-16">

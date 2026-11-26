@@ -31,6 +31,9 @@ export interface SessionUser {
   token: string;
 }
 
+/** The auth popup's two faces: sign in, or create an account. */
+export type AuthMode = "login" | "register";
+
 export interface CartLine {
   productId: string;
   slug: string;
@@ -62,6 +65,16 @@ interface ShopState {
   cartSubtotal: number;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { firstName: string; lastName: string; email: string; password: string }) => Promise<void>;
+  /** Auth popup state: login/signup are a POPUP, not pages — one
+   *  modal, two switchable modes. `authNext` is the page a guard
+   *  bounced the visitor away from; a successful sign-in inside
+   *  the popup lands them back there. */
+  authOpen: boolean;
+  authMode: AuthMode;
+  authNext: string | null;
+  openAuth: (mode?: AuthMode, next?: string | null) => void;
+  closeAuth: () => void;
+  switchAuthMode: (mode: AuthMode) => void;
   logout: () => void;
   /** The stored session turned out to be dead server-side (expired
    *  token, rotated secret, deactivated/role-changed account): drop
@@ -98,6 +111,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [wishlist, setWishlist] = useState<WishlistEntry[]>([]);
   const [ready, setReady] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [authNext, setAuthNext] = useState<string | null>(null);
   const hydrated = useRef(false);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** The token of the session the UI currently believes in. The
@@ -280,6 +296,29 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  // Auth popup controls. openAuth always starts from a clean
+  // destination: callers that bounce a visitor (the account
+  // guards) pass where they were headed; every other entry point
+  // (header, footer, prompts) passes nothing, so a stale
+  // destination can never hijack a later sign-in.
+  const openAuth = useCallback((mode: AuthMode = "login", next: string | null = null) => {
+    setAuthMode(mode);
+    setAuthNext(next);
+    setAuthOpen(true);
+  }, []);
+
+  const closeAuth = useCallback(() => {
+    setAuthOpen(false);
+    setAuthNext(null);
+  }, []);
+
+  // Tab switch inside the popup: the remembered destination
+  // survives it — a guard-bounced visitor who picks Sign Up
+  // still lands on the page they wanted after registering.
+  const switchAuthMode = useCallback((mode: AuthMode) => {
+    setAuthMode(mode);
+  }, []);
+
   // Same dead-session treatment as the load-time validation: the
   // session goes, and so does everything mirrored from its account.
   const expireSession = useCallback(() => {
@@ -404,6 +443,12 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       cartSubtotal: cart.reduce((sum, line) => sum + line.price * line.quantity, 0),
       login,
       register,
+      authOpen,
+      authMode,
+      authNext,
+      openAuth,
+      closeAuth,
+      switchAuthMode,
       logout,
       expireSession,
       addToCart,
@@ -413,7 +458,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       toggleWishlist,
       isWishlisted,
     }),
-    [user, ready, cart, wishlist, login, register, logout, expireSession, addToCart, updateQty, removeLine, clearCart, toggleWishlist, isWishlisted],
+    [user, ready, cart, wishlist, login, register, authOpen, authMode, authNext, openAuth, closeAuth, switchAuthMode, logout, expireSession, addToCart, updateQty, removeLine, clearCart, toggleWishlist, isWishlisted],
   );
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;

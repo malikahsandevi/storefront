@@ -14,7 +14,7 @@ const emptyAddress: CustomerAddress = {
  *  wiring (redirect when signed out, /me fetch + save with the
  *  session token), restyled as numbered vault panels. */
 export default function AccountPage() {
-  const { user, ready, logout, expireSession } = useShop();
+  const { user, ready, logout, expireSession, openAuth } = useShop();
   const router = useRouter();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [firstName, setFirstName] = useState("");
@@ -31,9 +31,15 @@ export default function AccountPage() {
   const [pwError, setPwError] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
 
+  // No valid session: home with the sign-in POPUP open (there
+  // is no login page), remembering this page so a successful
+  // sign-in lands the visitor right back here.
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
-  }, [ready, user, router]);
+    if (ready && !user) {
+      openAuth("login", "/account");
+      router.replace("/");
+    }
+  }, [ready, user, openAuth, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -63,7 +69,7 @@ export default function AccountPage() {
   }
 
   if (!user) {
-    return <p className="wrap py-16 text-center text-muted">Redirecting to sign in…</p>;
+    return <p className="wrap py-16 text-center text-muted">Opening sign in…</p>;
   }
 
   const save = async (e: React.FormEvent) => {

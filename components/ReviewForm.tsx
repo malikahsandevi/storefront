@@ -53,7 +53,7 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
       }}
     >
       <h3 className="font-display text-xl font-medium text-cream">Write a review</h3>
-      <div className="mt-3 flex items-center gap-1" role="radiogroup" aria-label="Your rating">
+      <div className="mt-3 flex items-center gap-0.5" role="radiogroup" aria-label="Your rating">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
@@ -62,7 +62,7 @@ export default function ReviewForm({ product }: { product: CatalogProduct }) {
             aria-checked={rating === star}
             aria-label={`${star} star${star > 1 ? "s" : ""}`}
             onClick={() => setRating(star)}
-            className={`text-2xl transition ${star <= rating ? "text-primary" : "text-line hover:text-primary/60"}`}
+            className={`flex h-9 w-9 items-center justify-center text-2xl transition ${star <= rating ? "text-primary" : "text-line hover:text-primary/60"}`}
           >
             ★
           </button>

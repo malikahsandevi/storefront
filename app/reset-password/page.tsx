@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { apiCall } from "@/lib/api";
+import { useShop } from "@/lib/store";
 
 /** Reset password: the emailed link lands here with ?token=… — the
  *  token is the credential (single-use, 1-hour expiry, enforced by
  *  the backend). No token, or a refused token, lands on a plain
  *  invalid-link state that points back to Forgot Password. */
 function ResetForm() {
+  const { openAuth } = useShop();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
   const [password, setPassword] = useState("");
@@ -38,9 +40,9 @@ function ResetForm() {
         <p className="text-sm leading-relaxed text-muted">
           Your password has been reset. You can now sign in with your new password.
         </p>
-        <Link href="/login" className="btn btn--primary btn--block mt-5">
+        <button type="button" className="btn btn--primary btn--block mt-5" onClick={() => openAuth("login")}>
           Sign In
-        </Link>
+        </button>
       </div>
     );
   }

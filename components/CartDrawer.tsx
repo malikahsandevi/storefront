@@ -12,7 +12,7 @@ import {
 } from "react";
 import { apiCall, formatMoney, type ShippingOptionSet, type StoreConfig } from "@/lib/api";
 import { useShop } from "@/lib/store";
-import { IconArrow, IconBag, IconCheck, IconClose } from "./icons";
+import { IconArrow, IconBox, IconCheck, IconClose } from "./icons";
 
 /**
  * The cart pop-up, in the reference store's behaviour: adding a
@@ -201,15 +201,17 @@ export default function CartDrawer() {
               </p>
               {/* Dual-action button (Ahsan, 2026-11-26): ONE
                   gradient pill, two actions — Proceed to Checkout
-                  on the left, View Cart on the right — split by a
-                  centre divider with each zone's icon hugging the
-                  divider. Hovering (or focusing) a zone slides the
-                  divider away from it: that zone expands to its
-                  full text while the other compresses to its icon
-                  alone. Both zones stay real links; on touch the
-                  pill rests centred and each half taps its own
-                  action. Below it, Shop More keeps the shopper
-                  shopping (close + /shop). */}
+                  on the left, Shop More on the right (his later
+                  order the same day replaced View Cart with Shop
+                  More → /shop and removed the standalone Shop More
+                  ghost button that used to sit below the pill) —
+                  split by a centre divider with each zone's icon
+                  hugging the divider. Hovering (or focusing) a
+                  zone slides the divider away from it: that zone
+                  expands to its full text while the other
+                  compresses to its icon alone. Both zones stay
+                  real links; on touch the pill rests centred and
+                  each half taps its own action. */}
               <div
                 className={`dualbtn mt-4${dualSide ? ` dualbtn--${dualSide}` : ""}`}
                 onMouseLeave={() => setDualSide(null)}
@@ -227,24 +229,17 @@ export default function CartDrawer() {
                 </Link>
                 <span className="dualbtn__divider" aria-hidden />
                 <Link
-                  href="/cart"
+                  href="/shop"
                   className="dualbtn__zone dualbtn__zone--right"
                   onClick={() => setOpen(false)}
                   onMouseEnter={() => setDualSide("right")}
                   onFocus={() => setDualSide("right")}
                   onBlur={() => setDualSide(null)}
                 >
-                  <IconBag className="dualbtn__icon" />
-                  <span className="dualbtn__label">View Cart</span>
+                  <IconBox className="dualbtn__icon" />
+                  <span className="dualbtn__label">Shop More</span>
                 </Link>
               </div>
-              <Link
-                href="/shop"
-                className="btn btn--ghost btn--block btn--shine mt-2.5"
-                onClick={() => setOpen(false)}
-              >
-                Shop More
-              </Link>
               <ul className="mt-4 space-y-1.5 text-[13px] text-muted">
                 <li className="flex items-center gap-2">
                   <IconCheck className="h-4 w-4 text-primary" /> Order tracking on every purchase

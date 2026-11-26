@@ -464,7 +464,7 @@ export default function CheckoutPage() {
 
           <section className="panel panel--pad" aria-labelledby="pay-h">
             <h2 id="pay-h" className="flex items-center font-display text-xl font-medium text-cream">
-              {stepChip(4)}Payment
+              {stepChip(shipping && shipping.configured ? 4 : 3)}Payment
             </h2>
             <div className="mt-4 space-y-2.5">
               {(config?.paymentMethods.length ? config.paymentMethods : [{ name: "Cash on Delivery", description: "" }]).map((method) => (

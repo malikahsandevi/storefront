@@ -1,14 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { apiCall } from "@/lib/api";
+import { useShop } from "@/lib/store";
 
 /** Forgot password: ask for the account email. The backend always
  *  answers with the same generic message (a reset link is sent only
  *  when the account exists), and this page mirrors that — the sent
  *  state never confirms or denies an account. */
 export default function ForgotPasswordPage() {
+  const { openAuth } = useShop();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -21,7 +22,7 @@ export default function ForgotPasswordPage() {
       </p>
       <h1 className="h1-page mt-4">Forgot Password</h1>
       <p className="mt-3 text-sm text-muted">
-        Remembered it after all? <Link href="/login" className="font-semibold text-primary transition hover:text-cream">Sign in</Link>
+        Remembered it after all? <button type="button" className="cursor-pointer font-semibold text-primary transition hover:text-cream" onClick={() => openAuth("login")}>Sign in</button>
       </p>
       {sent ? (
         <div className="panel panel--pad mt-7">
@@ -29,9 +30,9 @@ export default function ForgotPasswordPage() {
             If an account with that email exists, a password reset link has been sent.
             The link expires in 1 hour and can be used only once.
           </p>
-          <Link href="/login" className="btn btn--primary btn--block mt-5">
+          <button type="button" className="btn btn--primary btn--block mt-5" onClick={() => openAuth("login")}>
             Back to Sign In
-          </Link>
+          </button>
         </div>
       ) : (
         <form
