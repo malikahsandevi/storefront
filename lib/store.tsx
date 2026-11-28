@@ -106,6 +106,34 @@ function readJSON<T>(key: string): T | null {
 
 const lineKey = (productId: string, variant?: string) => `${productId}::${variant || ""}`;
 
+// The account's server-saved lists, in local state shape — shared by
+// the sign-in adoption and the stored-session restore so both paths
+// merge exactly the same way.
+function serverCartLines(profile: CustomerProfile): CartLine[] {
+  return (profile.cart || []).map((entry) => ({
+    productId: entry.product._id,
+    slug: entry.product.slug,
+    name: entry.product.name,
+    image: entry.product.image,
+    price: entry.product.price,
+    comparePrice: entry.product.comparePrice,
+    stock: entry.product.stock,
+    quantity: entry.quantity,
+  }));
+}
+
+function serverWishlistEntries(profile: CustomerProfile): WishlistEntry[] {
+  return (profile.wishlist || []).map((product) => ({
+    productId: product._id,
+    slug: product.slug,
+    name: product.name,
+    image: product.image,
+    price: product.price,
+    comparePrice: product.comparePrice,
+    stock: product.stock,
+  }));
+}
+
 export function ShopProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -134,8 +162,10 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   // 5xx) keeps the stored session — a network hiccup must not log
   // the shopper out.
   useEffect(() => {
-    setCart(readJSON<CartLine[]>(CART_KEY) || []);
-    setWishlist(readJSON<WishlistEntry[]>(WISHLIST_KEY) || []);
+    const localCart = readJSON<CartLine[]>(CART_KEY) || [];
+    const localWishlist = readJSON<WishlistEntry[]>(WISHLIST_KEY) || [];
+    setCart(localCart);
+    setWishlist(localWishlist);
     hydrated.current = true;
     const stored = readJSON<SessionUser>(AUTH_KEY);
     if (!stored?.token) {
@@ -165,6 +195,25 @@ export function ShopProvider({ children }: { children: ReactNode }) {
             /* storage unavailable — the in-memory session stands */
           }
           setUser(session);
+          // Adopt the account's server-saved lists the same way a
+          // fresh sign-in does (union; this device's entries win a
+          // clash). Without this, a returning shopper whose lists
+          // live only on the account — another device, cleared
+          // storage — would see an empty cart and wishlist on
+          // every page, the account page's collection included.
+          const mergedCart = new Map(
+            serverCartLines(profile).map((line) => [lineKey(line.productId, line.variant), line]),
+          );
+          for (const line of localCart) mergedCart.set(lineKey(line.productId, line.variant), line);
+          const nextCart = [...mergedCart.values()];
+          const mergedWishlist = new Map(
+            serverWishlistEntries(profile).map((entry) => [entry.productId, entry]),
+          );
+          for (const entry of localWishlist) mergedWishlist.set(entry.productId, entry);
+          const nextWishlist = [...mergedWishlist.values()];
+          setCart(nextCart);
+          setWishlist(nextWishlist);
+          scheduleSync(nextCart, nextWishlist, session);
         }
         setReady(true);
       })
@@ -235,25 +284,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       setUser(session);
       try {
         const profile = await apiCall<CustomerProfile>("GET", "/api/storefront/me", undefined, session.token);
-        const serverCart: CartLine[] = (profile.cart || []).map((entry) => ({
-          productId: entry.product._id,
-          slug: entry.product.slug,
-          name: entry.product.name,
-          image: entry.product.image,
-          price: entry.product.price,
-          comparePrice: entry.product.comparePrice,
-          stock: entry.product.stock,
-          quantity: entry.quantity,
-        }));
-        const serverWishlist: WishlistEntry[] = (profile.wishlist || []).map((product) => ({
-          productId: product._id,
-          slug: product.slug,
-          name: product.name,
-          image: product.image,
-          price: product.price,
-          comparePrice: product.comparePrice,
-          stock: product.stock,
-        }));
+        const serverCart = serverCartLines(profile);
+        const serverWishlist = serverWishlistEntries(profile);
         setCart((local) => {
           const merged = new Map(serverCart.map((line) => [lineKey(line.productId, line.variant), line]));
           for (const line of local) merged.set(lineKey(line.productId, line.variant), line);

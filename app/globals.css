@@ -3602,6 +3602,11 @@ a.tick__fact:hover {
   box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.85);
   animation: auth-in 0.35s var(--ease);
 }
+/* Wider variant for the account page's address-book modal — the
+   two-column address fields need the room the auth card denies. */
+.auth__card--wide {
+  width: min(720px, 100%);
+}
 @keyframes auth-in {
   from {
     transform: translateY(16px);
