@@ -12,11 +12,11 @@ interface Rect {
   radius: number;
 }
 
-const MORPH_MS = 300;
+const MORPH_MS = 320;
 const EASING = "cubic-bezier(0.22, 0.61, 0.36, 1)";
 const MORPH_TRANSITION = `left ${MORPH_MS}ms ${EASING}, top ${MORPH_MS}ms ${EASING}, width ${MORPH_MS}ms ${EASING}, height ${MORPH_MS}ms ${EASING}, border-radius ${MORPH_MS}ms ${EASING}`;
 
-interface ViewState {
+interface FillState {
   from: Rect;
   frame: Rect;
   stage: "from" | "to";
@@ -31,21 +31,29 @@ interface ViewState {
  *
  *  The disc always wears a primary-colour ring. When a real photo
  *  is showing, an eye badge pinned to the rim at the 4 o'clock
- *  position opens the photo large: it morphs out of the disc into
- *  a centred square frame on a dimmed backdrop (the admin
- *  AvatarViewer's pattern) and shrinks back on close. */
+ *  position opens the IN-CARD fill view (Ahsan's design, 2026-11-28):
+ *  the card's other content fades out (the page does that via
+ *  onFillChange) while the photo — ring and all — morphs out of the
+ *  circle to fill the whole profile card block, cover-fit, corners
+ *  rounding to the card's own radius. The cross at the filled
+ *  block's top-right (or Escape) morphs it back into the circle and
+ *  the details fade back in. No overlay, no backdrop. */
 export default function AccountAvatar({
   name,
   avatar,
   size = 148,
+  onFillChange,
 }: {
   name: string;
   avatar?: string;
   size?: number;
+  /** Told when the fill view opens/closes so the card can fade its
+   *  other content out and back in, in sync with the morph. */
+  onFillChange?: (active: boolean) => void;
 }) {
   const [failed, setFailed] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
-  const [view, setView] = useState<ViewState | null>(null);
+  const [fill, setFill] = useState<FillState | null>(null);
   const [primed, setPrimed] = useState(false);
   const timersRef = useRef<number[]>([]);
 
@@ -73,49 +81,56 @@ export default function AccountAvatar({
     return { left: r.left, top: r.top, width: r.width, height: r.height, radius: r.width / 2 };
   }, []);
 
-  const openViewer = () => {
+  const measureCard = useCallback((): Rect | null => {
+    const el = wrapRef.current;
+    if (!el || !el.isConnected) return null;
+    const card = el.closest("[data-profile-card]");
+    if (!card) return null;
+    const r = card.getBoundingClientRect();
+    const radius = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 24;
+    return { left: r.left, top: r.top, width: r.width, height: r.height, radius };
+  }, []);
+
+  const openFill = () => {
     const from = measureDisc();
-    if (!from) return;
-    // A centred square frame — the photo is square, so the frame is.
-    const side = Math.min(440, window.innerWidth - 32, window.innerHeight * 0.78);
-    const frame: Rect = {
-      left: (window.innerWidth - side) / 2,
-      top: (window.innerHeight - side) / 2,
-      width: side,
-      height: side,
-      radius: 24,
-    };
+    const frame = measureCard();
+    if (!from || !frame) return;
     setPrimed(false);
-    setView({ from, frame, stage: "from", closing: false });
+    setFill({ from, frame, stage: "from", closing: false });
+    // The card's details fade out as the photo zooms to fill it.
+    onFillChange?.(true);
     // Two frames later the image sits at the disc; flipping the
-    // stage then morphs it into the frame.
+    // stage then morphs it into the card frame.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setPrimed(true);
-        setView((v) => (v ? { ...v, stage: "to" } : v));
+        setFill((f) => (f ? { ...f, stage: "to" } : f));
       });
     });
   };
 
-  const closeViewer = useCallback(() => {
-    setView((current) => {
+  const closeFill = useCallback(() => {
+    setFill((current) => {
       if (!current || current.closing) return current;
-      // Re-measure the disc — it may have moved (scroll, layout)
-      // since the viewer opened. If it is gone, shrink in place.
+      // Re-measure the disc — it may have moved (layout) since the
+      // fill opened. If it is gone, shrink toward the last spot.
       const fresh = measureDisc();
       return { ...current, from: fresh ?? current.from, stage: "from", closing: true };
     });
+    // The details fade back in as the photo returns to the circle.
+    onFillChange?.(false);
     later(() => {
-      setView(null);
+      setFill(null);
       setPrimed(false);
     }, MORPH_MS + 40);
-  }, [later, measureDisc]);
+  }, [later, measureDisc, onFillChange]);
 
-  // Esc closes; the page behind locks its scroll while viewing.
+  // Esc closes; the page locks its scroll while filled so the
+  // morph stays glued to the card it fills.
   useEffect(() => {
-    if (!view) return;
+    if (!fill) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeViewer();
+      if (e.key === "Escape") closeFill();
     };
     window.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -124,9 +139,9 @@ export default function AccountAvatar({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [view, closeViewer]);
+  }, [fill, closeFill]);
 
-  const rect = view ? (view.stage === "from" ? view.from : view.frame) : null;
+  const rect = fill ? (fill.stage === "from" ? fill.from : fill.frame) : null;
 
   return (
     <span
@@ -152,6 +167,7 @@ export default function AccountAvatar({
             loading="lazy"
             onError={() => setFailed(true)}
             className="h-full w-full rounded-full border-4 border-primary object-cover"
+            style={{ visibility: fill ? "hidden" : "visible" }}
           />
           {/* Eye badge pinned ON the rim at 4 o'clock: its centre
               sits on the circle's boundary (93.3% across, 75% down
@@ -159,35 +175,35 @@ export default function AccountAvatar({
               so the badge straddles the edge. */}
           <button
             type="button"
-            onClick={openViewer}
+            onClick={openFill}
             aria-label="View profile photo"
             title="View photo"
             className="absolute z-10 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-ink-2 text-cream shadow-lg transition hover:text-primary"
-            style={{ left: "93.3%", top: "75%", transform: "translate(-50%, -50%)" }}
+            style={{
+              left: "93.3%",
+              top: "75%",
+              transform: "translate(-50%, -50%)",
+              visibility: fill ? "hidden" : "visible",
+            }}
           >
             <IconEye className="h-[18px] w-[18px]" />
           </button>
         </>
       )}
 
-      {view &&
+      {fill &&
         rect &&
         avatar &&
         createPortal(
-          <div className="fixed inset-0 z-[140]">
-            {/* Backdrop — clicking outside the photo closes. */}
-            <div
-              onClick={closeViewer}
-              className="absolute inset-0 bg-black/60"
-              style={{ opacity: view.closing ? 0 : 1, transition: `opacity ${MORPH_MS}ms ease` }}
-            />
-            {/* The morphing photo itself: disc <-> centred frame. */}
+          <>
+            {/* The morphing photo itself: disc <-> the whole card
+                block, primary ring on it the whole way. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatar}
               alt={name}
-              data-avatar-viewer-image
-              className="fixed z-[141] border-4 border-primary object-cover shadow-2xl"
+              data-avatar-fill-image
+              className="fixed z-[90] border-4 border-primary object-cover shadow-2xl"
               style={{
                 left: rect.left,
                 top: rect.top,
@@ -197,21 +213,21 @@ export default function AccountAvatar({
                 transition: primed ? MORPH_TRANSITION : undefined,
               }}
             />
-            {view.stage === "to" && !view.closing && (
+            {fill.stage === "to" && !fill.closing && (
               <button
                 type="button"
-                onClick={closeViewer}
-                aria-label="Close photo viewer"
-                className="fixed z-[142] flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition hover:bg-primary"
+                onClick={closeFill}
+                aria-label="Close photo view"
+                className="fixed z-[91] flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition hover:bg-primary"
                 style={{
-                  left: view.frame.left + view.frame.width - 48,
-                  top: view.frame.top + 12,
+                  left: fill.frame.left + fill.frame.width - 48,
+                  top: fill.frame.top + 12,
                 }}
               >
                 <IconClose className="h-4 w-4" />
               </button>
             )}
-          </div>,
+          </>,
           document.body,
         )}
     </span>

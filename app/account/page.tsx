@@ -51,6 +51,9 @@ export default function AccountPage() {
   // cropped square ever uploads.
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  // True while the profile photo fills its card (eye view): the
+  // card's other content fades out/in in sync with the morph.
+  const [cardFill, setCardFill] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMessage, setPhotoMessage] = useState("");
   const [photoError, setPhotoError] = useState("");
@@ -369,12 +372,11 @@ export default function AccountPage() {
           {/* ── Top row: profile card + details card ─────────── */}
           <div className="mt-8 grid gap-[18px] lg:grid-cols-5">
             <section
+              data-profile-card
               className="panel panel--pad flex flex-col items-center text-center lg:col-span-2"
               aria-label="Your profile"
             >
-              <AccountAvatar name={fullName} avatar={profile.avatar} />
-              <h2 className="mt-5 font-display text-2xl font-semibold text-cream">{fullName}</h2>
-              <p className="mt-3 text-sm text-muted">Member since {memberSince}</p>
+              <AccountAvatar name={fullName} avatar={profile.avatar} onFillChange={setCardFill} />
               <input
                 ref={photoInputRef}
                 type="file"
@@ -383,24 +385,34 @@ export default function AccountPage() {
                 className="hidden"
                 aria-label="Choose a new profile photo"
               />
-              <button
-                type="button"
-                disabled={photoBusy}
-                onClick={() => photoInputRef.current?.click()}
-                className="btn btn--ghost btn--sm mt-6 disabled:opacity-60"
+              {/* Everything else on the card: fades out while the
+                  photo fills the card, back in as it returns. */}
+              <div
+                aria-hidden={cardFill}
+                className="flex w-full flex-col items-center transition-opacity duration-300"
+                style={{ opacity: cardFill ? 0 : 1, pointerEvents: cardFill ? "none" : "auto" }}
               >
-                {photoBusy ? "Uploading…" : "Change Photo"}
-              </button>
-              {photoMessage && (
-                <p className="mt-3 text-sm text-emerald-400" role="status">
-                  {photoMessage}
-                </p>
-              )}
-              {photoError && (
-                <p className="mt-3 text-sm text-primary" role="alert">
-                  {photoError}
-                </p>
-              )}
+                <h2 className="mt-5 font-display text-2xl font-semibold text-cream">{fullName}</h2>
+                <p className="mt-3 text-sm text-muted">Member since {memberSince}</p>
+                <button
+                  type="button"
+                  disabled={photoBusy}
+                  onClick={() => photoInputRef.current?.click()}
+                  className="btn btn--ghost btn--sm mt-6 disabled:opacity-60"
+                >
+                  {photoBusy ? "Uploading…" : "Change Photo"}
+                </button>
+                {photoMessage && (
+                  <p className="mt-3 text-sm text-emerald-400" role="status">
+                    {photoMessage}
+                  </p>
+                )}
+                {photoError && (
+                  <p className="mt-3 text-sm text-primary" role="alert">
+                    {photoError}
+                  </p>
+                )}
+              </div>
             </section>
 
             <section className="panel panel--pad lg:col-span-3" aria-labelledby="details-h">
