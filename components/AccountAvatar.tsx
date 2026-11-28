@@ -21,6 +21,10 @@ interface FillState {
   frame: Rect;
   stage: "from" | "to";
   closing: boolean;
+  /** The profile region element the fill layer is portaled into —
+   *  the fill lives in that region's own flow, so it scrolls with
+   *  the page instead of pinning to the viewport. */
+  host: HTMLElement;
 }
 
 /** The account card's big profile disc: the customer's photo when
@@ -31,13 +35,19 @@ interface FillState {
  *
  *  The disc always wears a primary-colour ring. When a real photo
  *  is showing, an eye badge pinned to the rim at the 4 o'clock
- *  position opens the IN-CARD fill view (Ahsan's design, 2026-11-28):
- *  the card's other content fades out (the page does that via
- *  onFillChange) while the photo — ring and all — morphs out of the
- *  circle to fill the whole profile card block, cover-fit, corners
- *  rounding to the card's own radius. The cross at the filled
- *  block's top-right (or Escape) morphs it back into the circle and
- *  the details fade back in. No overlay, no backdrop. */
+ *  position opens the fill view (Ahsan's design, 2026-11-28): the
+ *  whole profile region's content fades out (the page does that
+ *  via onFillChange) while the photo — ring and all — morphs out
+ *  of the circle to fill the ENTIRE profile area (the top row,
+ *  quick links, My Orders and My Collection — the
+ *  [data-profile-region] wrapper), cover-fit, corners rounding to
+ *  the card radius. The fill layer is portaled into the region
+ *  itself and positioned absolutely within it, so it sits in the
+ *  page flow: the region keeps its height, the page scrolls
+ *  normally and the filled photo scrolls with it — no fixed
+ *  overlay, no scroll lock, no backdrop. The cross at the filled
+ *  area's top-right (or Escape) morphs it back into the circle and
+ *  every section fades back in. */
 export default function AccountAvatar({
   name,
   avatar,
@@ -47,8 +57,9 @@ export default function AccountAvatar({
   name: string;
   avatar?: string;
   size?: number;
-  /** Told when the fill view opens/closes so the card can fade its
-   *  other content out and back in, in sync with the morph. */
+  /** Told when the fill view opens/closes so the page can fade the
+   *  whole profile region's content out and back in, in sync with
+   *  the morph. */
   onFillChange?: (active: boolean) => void;
 }) {
   const [failed, setFailed] = useState(false);
@@ -74,33 +85,44 @@ export default function AccountAvatar({
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, []);
 
-  const measureDisc = useCallback((): Rect | null => {
+  /** The disc's rect expressed relative to the profile region —
+   *  the fill layer is absolutely positioned inside the region, so
+   *  both rects are measured in the same instant and the scroll
+   *  offset cancels out of the subtraction. */
+  const measureDiscInRegion = useCallback((region: HTMLElement): Rect | null => {
     const el = wrapRef.current;
     if (!el || !el.isConnected) return null;
-    const r = el.getBoundingClientRect();
-    return { left: r.left, top: r.top, width: r.width, height: r.height, radius: r.width / 2 };
-  }, []);
-
-  const measureCard = useCallback((): Rect | null => {
-    const el = wrapRef.current;
-    if (!el || !el.isConnected) return null;
-    const card = el.closest("[data-profile-card]");
-    if (!card) return null;
-    const r = card.getBoundingClientRect();
-    const radius = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 24;
-    return { left: r.left, top: r.top, width: r.width, height: r.height, radius };
+    const d = el.getBoundingClientRect();
+    const g = region.getBoundingClientRect();
+    return {
+      left: d.left - g.left,
+      top: d.top - g.top,
+      width: d.width,
+      height: d.height,
+      radius: d.width / 2,
+    };
   }, []);
 
   const openFill = () => {
-    const from = measureDisc();
-    const frame = measureCard();
-    if (!from || !frame) return;
+    const el = wrapRef.current;
+    if (!el || !el.isConnected) return;
+    const region = el.closest("[data-profile-region]");
+    if (!(region instanceof HTMLElement)) return;
+    const from = measureDiscInRegion(region);
+    if (!from) return;
+    // The filled block's corners take the profile card's radius.
+    const card = el.closest("[data-profile-card]");
+    const radius = card
+      ? parseFloat(getComputedStyle(card).borderTopLeftRadius) || 24
+      : 24;
+    const g = region.getBoundingClientRect();
+    const frame: Rect = { left: 0, top: 0, width: g.width, height: g.height, radius };
     setPrimed(false);
-    setFill({ from, frame, stage: "from", closing: false });
-    // The card's details fade out as the photo zooms to fill it.
+    setFill({ from, frame, stage: "from", closing: false, host: region });
+    // The whole region's content fades out as the photo fills it.
     onFillChange?.(true);
     // Two frames later the image sits at the disc; flipping the
-    // stage then morphs it into the card frame.
+    // stage then morphs it into the region frame.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setPrimed(true);
@@ -112,33 +134,29 @@ export default function AccountAvatar({
   const closeFill = useCallback(() => {
     setFill((current) => {
       if (!current || current.closing) return current;
-      // Re-measure the disc — it may have moved (layout) since the
-      // fill opened. If it is gone, shrink toward the last spot.
-      const fresh = measureDisc();
+      // Re-measure the disc — the page may have scrolled (or the
+      // layout shifted) since the fill opened. If it is gone,
+      // shrink toward the last known spot.
+      const fresh = measureDiscInRegion(current.host);
       return { ...current, from: fresh ?? current.from, stage: "from", closing: true };
     });
-    // The details fade back in as the photo returns to the circle.
+    // Every section fades back in as the photo returns to the circle.
     onFillChange?.(false);
     later(() => {
       setFill(null);
       setPrimed(false);
     }, MORPH_MS + 40);
-  }, [later, measureDisc, onFillChange]);
+  }, [later, measureDiscInRegion, onFillChange]);
 
-  // Esc closes; the page locks its scroll while filled so the
-  // morph stays glued to the card it fills.
+  // Esc closes. The page is NOT scroll-locked: the fill lives in
+  // the region's flow and scrolls away with the page, by design.
   useEffect(() => {
     if (!fill) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeFill();
     };
     window.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [fill, closeFill]);
 
   const rect = fill ? (fill.stage === "from" ? fill.from : fill.frame) : null;
@@ -196,14 +214,16 @@ export default function AccountAvatar({
         avatar &&
         createPortal(
           <>
-            {/* The morphing photo itself: disc <-> the whole card
-                block, primary ring on it the whole way. */}
+            {/* The morphing photo itself: disc <-> the whole profile
+                region, primary ring on it the whole way. Absolutely
+                positioned inside the region, so it scrolls with the
+                page like any other part of the block. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatar}
               alt={name}
               data-avatar-fill-image
-              className="fixed z-[90] border-4 border-primary object-cover shadow-2xl"
+              className="absolute z-[90] border-4 border-primary object-cover shadow-2xl"
               style={{
                 left: rect.left,
                 top: rect.top,
@@ -218,17 +238,14 @@ export default function AccountAvatar({
                 type="button"
                 onClick={closeFill}
                 aria-label="Close photo view"
-                className="fixed z-[91] flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition hover:bg-primary"
-                style={{
-                  left: fill.frame.left + fill.frame.width - 48,
-                  top: fill.frame.top + 12,
-                }}
+                className="absolute z-[91] flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition hover:bg-primary"
+                style={{ right: 12, top: 12 }}
               >
                 <IconClose className="h-4 w-4" />
               </button>
             )}
           </>,
-          document.body,
+          fill.host,
         )}
     </span>
   );

@@ -14,7 +14,7 @@ import {
 import { useShop, type ProductLike } from "@/lib/store";
 import AccountAvatar from "@/components/AccountAvatar";
 import ImageCropper from "@/components/ImageCropper";
-import { IconBag, IconBox, IconClose, IconHeart, IconTruck } from "@/components/icons";
+import { IconBag, IconBox, IconHeart, IconTruck } from "@/components/icons";
 
 const emptyAddress: CustomerAddress = {
   street: "", city: "", state: "", zipCode: "", country: "Pakistan", isDefault: false,
@@ -35,10 +35,14 @@ function Detail({ label, value }: { label: string; value: React.ReactNode }) {
  *  (2026-11-28): a big-photo profile card beside an "Account &
  *  other details" card, a quick-links band, recent orders as
  *  "My Orders", the wishlist as "My Collection", and the password
- *  form below. Every capability of the previous page survives:
- *  profile edit and the address book open as modals from the
- *  details card, the password form is unchanged, and the sign-in
- *  guard behaves exactly as before. */
+ *  form below. Editing happens INLINE in the details card (Ahsan's
+ *  follow-up order): Edit Profile turns the grid's fields into
+ *  inputs right where they sit, and Manage Addresses expands the
+ *  address book inside the same card — no popups on this page.
+ *  The eye on the photo fills the WHOLE profile region (top row,
+ *  quick links, orders, collection) in the page flow. The password
+ *  form is unchanged, and the sign-in guard behaves exactly as
+ *  before. */
 export default function AccountPage() {
   const { user, ready, logout, expireSession, openAuth, wishlist, toggleWishlist } = useShop();
   const router = useRouter();
@@ -51,21 +55,22 @@ export default function AccountPage() {
   // cropped square ever uploads.
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
-  // True while the profile photo fills its card (eye view): the
-  // card's other content fades out/in in sync with the morph.
-  const [cardFill, setCardFill] = useState(false);
+  // True while the profile photo fills the whole profile region
+  // (eye view): every section in the region fades out/in in sync
+  // with the morph.
+  const [regionFill, setRegionFill] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMessage, setPhotoMessage] = useState("");
   const [photoError, setPhotoError] = useState("");
-  // Edit-profile modal drafts
-  const [editOpen, setEditOpen] = useState(false);
+  // Inline edit-profile drafts (the details grid itself edits)
+  const [editing, setEditing] = useState(false);
   const [draftFirst, setDraftFirst] = useState("");
   const [draftLast, setDraftLast] = useState("");
   const [draftPhone, setDraftPhone] = useState("");
   const [editError, setEditError] = useState("");
   const [editSaving, setEditSaving] = useState(false);
-  // Address-book modal drafts
-  const [addrOpen, setAddrOpen] = useState(false);
+  // Inline address-book drafts (expands inside the details card)
+  const [addrExpanded, setAddrExpanded] = useState(false);
   const [draftAddresses, setDraftAddresses] = useState<CustomerAddress[]>([]);
   const [addrError, setAddrError] = useState("");
   const [addrSaving, setAddrSaving] = useState(false);
@@ -115,26 +120,6 @@ export default function AccountPage() {
       .then((config) => setCurrency(config.currency || "USD"))
       .catch(() => {});
   }, [user, expireSession]);
-
-  // Modal behaviour, shared with the auth popup: Escape closes,
-  // the page behind locks its scroll, backdrop click cancels.
-  const anyModalOpen = editOpen || addrOpen;
-  useEffect(() => {
-    if (!anyModalOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setEditOpen(false);
-        setAddrOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [anyModalOpen]);
 
   if (!ready) {
     return <p className="wrap py-16 text-center text-muted">Loading…</p>;
@@ -213,13 +198,19 @@ export default function AccountPage() {
     }
   };
 
-  const openEdit = () => {
+  const startEdit = () => {
     if (!profile) return;
     setDraftFirst(profile.firstName);
     setDraftLast(profile.lastName);
     setDraftPhone(profile.phone);
     setEditError("");
-    setEditOpen(true);
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    // Drafts are copies — dropping them restores the shown values.
+    setEditing(false);
+    setEditError("");
   };
 
   const saveProfile = async (e: React.FormEvent) => {
@@ -240,7 +231,7 @@ export default function AccountPage() {
         user.token,
       );
       setProfile(updated);
-      setEditOpen(false);
+      setEditing(false);
       setMessage("Your profile has been saved.");
       setError("");
     } catch (err) {
@@ -254,11 +245,14 @@ export default function AccountPage() {
     }
   };
 
-  const openAddresses = () => {
+  const toggleAddresses = () => {
     if (!profile) return;
-    setDraftAddresses(profile.addresses.map((a) => ({ ...a })));
-    setAddrError("");
-    setAddrOpen(true);
+    if (!addrExpanded) {
+      // Fresh copies on every expand: edits stay drafts until Save.
+      setDraftAddresses(profile.addresses.map((a) => ({ ...a })));
+      setAddrError("");
+    }
+    setAddrExpanded((open) => !open);
   };
 
   const updateDraftAddress = (index: number, patch: Partial<CustomerAddress>) =>
@@ -282,7 +276,7 @@ export default function AccountPage() {
         user.token,
       );
       setProfile(updated);
-      setAddrOpen(false);
+      setAddrExpanded(false);
       setMessage("Your addresses have been saved.");
       setError("");
     } catch (err) {
@@ -368,7 +362,19 @@ export default function AccountPage() {
       {!profile && !error && <p className="mt-10 text-muted">Loading your profile…</p>}
 
       {profile && (
-        <>
+        <div data-profile-region className="relative">
+          {/* Every section of the profile area lives in this layer:
+              while the photo fills the region (eye view) it fades
+              out in place — the layout never moves, so the region
+              keeps its height and the fill can scroll with the
+              page. The fill layer itself is portaled into the
+              region, outside this fading layer. */}
+          <div
+            data-profile-region-content
+            aria-hidden={regionFill}
+            className="flow-root transition-opacity duration-300"
+            style={{ opacity: regionFill ? 0 : 1, pointerEvents: regionFill ? "none" : "auto" }}
+          >
           {/* ── Top row: profile card + details card ─────────── */}
           <div className="mt-8 grid gap-[18px] lg:grid-cols-5">
             <section
@@ -376,7 +382,7 @@ export default function AccountPage() {
               className="panel panel--pad flex flex-col items-center text-center lg:col-span-2"
               aria-label="Your profile"
             >
-              <AccountAvatar name={fullName} avatar={profile.avatar} onFillChange={setCardFill} />
+              <AccountAvatar name={fullName} avatar={profile.avatar} onFillChange={setRegionFill} />
               <input
                 ref={photoInputRef}
                 type="file"
@@ -385,68 +391,279 @@ export default function AccountPage() {
                 className="hidden"
                 aria-label="Choose a new profile photo"
               />
-              {/* Everything else on the card: fades out while the
-                  photo fills the card, back in as it returns. */}
-              <div
-                aria-hidden={cardFill}
-                className="flex w-full flex-col items-center transition-opacity duration-300"
-                style={{ opacity: cardFill ? 0 : 1, pointerEvents: cardFill ? "none" : "auto" }}
+              <h2 className="mt-5 font-display text-2xl font-semibold text-cream">{fullName}</h2>
+              <p className="mt-3 text-sm text-muted">Member since {memberSince}</p>
+              <button
+                type="button"
+                disabled={photoBusy}
+                onClick={() => photoInputRef.current?.click()}
+                className="btn btn--ghost btn--sm mt-6 disabled:opacity-60"
               >
-                <h2 className="mt-5 font-display text-2xl font-semibold text-cream">{fullName}</h2>
-                <p className="mt-3 text-sm text-muted">Member since {memberSince}</p>
-                <button
-                  type="button"
-                  disabled={photoBusy}
-                  onClick={() => photoInputRef.current?.click()}
-                  className="btn btn--ghost btn--sm mt-6 disabled:opacity-60"
-                >
-                  {photoBusy ? "Uploading…" : "Change Photo"}
-                </button>
-                {photoMessage && (
-                  <p className="mt-3 text-sm text-emerald-400" role="status">
-                    {photoMessage}
-                  </p>
-                )}
-                {photoError && (
-                  <p className="mt-3 text-sm text-primary" role="alert">
-                    {photoError}
-                  </p>
-                )}
-              </div>
+                {photoBusy ? "Uploading…" : "Change Photo"}
+              </button>
+              {photoMessage && (
+                <p className="mt-3 text-sm text-emerald-400" role="status">
+                  {photoMessage}
+                </p>
+              )}
+              {photoError && (
+                <p className="mt-3 text-sm text-primary" role="alert">
+                  {photoError}
+                </p>
+              )}
             </section>
 
             <section className="panel panel--pad lg:col-span-3" aria-labelledby="details-h">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="details-h" className="font-display text-xl font-medium text-cream">
-                  Account &amp; other details
-                </h2>
-                <div className="flex flex-wrap gap-2.5">
-                  <button type="button" onClick={openEdit} className="btn btn--ghost btn--sm">
-                    Edit Profile
-                  </button>
-                  <button type="button" onClick={openAddresses} className="btn btn--ghost btn--sm">
-                    Manage Addresses
-                  </button>
+              {/* Editing is INLINE (Ahsan's order): Edit Profile turns
+                  the grid's own fields into inputs right where they
+                  sit — no popup anywhere on this page. */}
+              <form onSubmit={saveProfile}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h2 id="details-h" className="font-display text-xl font-medium text-cream">
+                    Account &amp; other details
+                  </h2>
+                  <div className="flex flex-wrap gap-2.5">
+                    {editing ? (
+                      <>
+                        <button type="button" onClick={cancelEdit} className="btn btn--ghost btn--sm">
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={editSaving}
+                          className="btn btn--primary btn--sm disabled:opacity-60"
+                        >
+                          {editSaving ? "Saving…" : "Save Changes"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={startEdit} className="btn btn--ghost btn--sm">
+                          Edit Profile
+                        </button>
+                        <button type="button" onClick={toggleAddresses} className="btn btn--ghost btn--sm">
+                          {addrExpanded ? "Close Addresses" : "Manage Addresses"}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
-                <Detail label="Full name" value={fullName} />
-                <Detail label="Email" value={profile.email} />
-                <Detail label="Phone" value={profile.phone || "Not set"} />
-                <Detail
-                  label="Default address"
-                  value={
-                    defaultAddress
-                      ? `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.country}`
-                      : "Not set"
-                  }
-                />
-                <Detail label="Member since" value={memberSinceFull} />
-                <Detail
-                  label="Orders placed"
-                  value={orders === null ? "—" : String(orders.length)}
-                />
-              </div>
+                <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+                  <Detail
+                    label="Full name"
+                    value={
+                      editing ? (
+                        <span className="flex flex-col gap-2">
+                          <input
+                            id="ac-first"
+                            value={draftFirst}
+                            onChange={(e) => setDraftFirst(e.target.value)}
+                            className="input"
+                            aria-label="First name"
+                            placeholder="First name"
+                          />
+                          <input
+                            id="ac-last"
+                            value={draftLast}
+                            onChange={(e) => setDraftLast(e.target.value)}
+                            className="input"
+                            aria-label="Last name"
+                            placeholder="Last name"
+                          />
+                        </span>
+                      ) : (
+                        fullName
+                      )
+                    }
+                  />
+                  <Detail
+                    label="Email"
+                    value={
+                      editing ? (
+                        <span>
+                          {profile.email}
+                          <span className="mt-1.5 block text-xs font-normal text-muted-2">
+                            Your email is your sign-in and cannot be changed here.
+                          </span>
+                        </span>
+                      ) : (
+                        profile.email
+                      )
+                    }
+                  />
+                  <Detail
+                    label="Phone"
+                    value={
+                      editing ? (
+                        <input
+                          id="ac-phone"
+                          value={draftPhone}
+                          onChange={(e) => setDraftPhone(e.target.value)}
+                          className="input"
+                          aria-label="Phone"
+                        />
+                      ) : (
+                        profile.phone || "Not set"
+                      )
+                    }
+                  />
+                  <Detail
+                    label="Default address"
+                    value={
+                      defaultAddress
+                        ? `${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.country}`
+                        : "Not set"
+                    }
+                  />
+                  <Detail label="Member since" value={memberSinceFull} />
+                  <Detail
+                    label="Orders placed"
+                    value={orders === null ? "—" : String(orders.length)}
+                  />
+                </div>
+                {editing && editError && (
+                  <p className="mt-4 text-sm text-primary" role="alert">
+                    {editError}
+                  </p>
+                )}
+              </form>
+
+              {/* The address book, expanded INLINE in the same card:
+                  same fields and semantics the popup had — drafts
+                  stay drafts until Save, Cancel/Close discards them. */}
+              {addrExpanded && (
+                <form
+                  onSubmit={saveAddresses}
+                  className="mt-8 border-t border-line pt-6"
+                  aria-label="Address book"
+                >
+                  <h3 className="font-display text-lg font-medium text-cream">Address Book</h3>
+                  {draftAddresses.length === 0 && (
+                    <p className="mt-4 text-sm text-muted">
+                      No saved addresses yet — add one to check out faster.
+                    </p>
+                  )}
+                  <div className="mt-4 space-y-4">
+                    {draftAddresses.map((address, i) => (
+                      <fieldset key={i} className="rounded-2xl border border-line bg-ink-2 p-5">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className="flabel" htmlFor={`addr-${i}-street`}>
+                              Street address
+                            </label>
+                            <input
+                              id={`addr-${i}-street`}
+                              value={address.street}
+                              onChange={(e) => updateDraftAddress(i, { street: e.target.value })}
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="flabel" htmlFor={`addr-${i}-city`}>
+                              City
+                            </label>
+                            <input
+                              id={`addr-${i}-city`}
+                              value={address.city}
+                              onChange={(e) => updateDraftAddress(i, { city: e.target.value })}
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="flabel" htmlFor={`addr-${i}-state`}>
+                              State / Province
+                            </label>
+                            <input
+                              id={`addr-${i}-state`}
+                              value={address.state}
+                              onChange={(e) => updateDraftAddress(i, { state: e.target.value })}
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="flabel" htmlFor={`addr-${i}-zip`}>
+                              ZIP / Postal code
+                            </label>
+                            <input
+                              id={`addr-${i}-zip`}
+                              value={address.zipCode}
+                              onChange={(e) => updateDraftAddress(i, { zipCode: e.target.value })}
+                              className="input"
+                            />
+                          </div>
+                          <div>
+                            <label className="flabel" htmlFor={`addr-${i}-country`}>
+                              Country
+                            </label>
+                            <input
+                              id={`addr-${i}-country`}
+                              value={address.country}
+                              onChange={(e) => updateDraftAddress(i, { country: e.target.value })}
+                              className="input"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between">
+                          <label className="flex items-center gap-2 text-sm text-muted">
+                            <input
+                              type="checkbox"
+                              checked={address.isDefault}
+                              onChange={(e) =>
+                                setDraftAddresses((prev) =>
+                                  prev.map((a, j) => ({
+                                    ...a,
+                                    isDefault: e.target.checked ? j === i : a.isDefault && j !== i,
+                                  })),
+                                )
+                              }
+                              className="chk"
+                            />
+                            Default address
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDraftAddresses((prev) => prev.filter((_, j) => j !== i))
+                            }
+                            className="text-sm text-muted-2 transition hover:text-primary"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </fieldset>
+                    ))}
+                  </div>
+                  {addrError && (
+                    <p className="mt-4 text-sm text-primary" role="alert">
+                      {addrError}
+                    </p>
+                  )}
+                  <div className="mt-5 flex flex-wrap gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setDraftAddresses((prev) => [...prev, { ...emptyAddress }])}
+                      className="btn btn--ghost"
+                    >
+                      + Add Address
+                    </button>
+                    <span className="flex-1" />
+                    <button
+                      type="button"
+                      onClick={() => setAddrExpanded(false)}
+                      className="btn btn--ghost"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={addrSaving}
+                      className="btn btn--primary disabled:opacity-60"
+                    >
+                      {addrSaving ? "Saving…" : "Save Changes"}
+                    </button>
+                  </div>
+                </form>
+              )}
             </section>
           </div>
 
@@ -637,7 +854,8 @@ export default function AccountPage() {
               </div>
             )}
           </section>
-        </>
+          </div>
+        </div>
       )}
 
       {/* ── Password ─────────────────────────────────────────── */}
@@ -702,241 +920,6 @@ export default function AccountPage() {
           </button>
         </section>
       </form>
-
-      {/* ── Edit Profile modal ───────────────────────────────── */}
-      {editOpen && profile && (
-        <div className="auth-root" role="dialog" aria-modal="true" aria-labelledby="edit-profile-h">
-          <button
-            type="button"
-            aria-label="Close"
-            className="auth__backdrop"
-            onClick={() => setEditOpen(false)}
-          />
-          <div className="auth__card">
-            <div className="auth__head">
-              <h2 id="edit-profile-h" className="auth__title">
-                Edit Profile
-              </h2>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setEditOpen(false)}
-                className="text-muted transition hover:text-cream"
-              >
-                <IconClose className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={saveProfile} className="mt-5 space-y-4">
-              <div>
-                <label htmlFor="ac-first" className="flabel">
-                  First name
-                </label>
-                <input
-                  id="ac-first"
-                  value={draftFirst}
-                  onChange={(e) => setDraftFirst(e.target.value)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label htmlFor="ac-last" className="flabel">
-                  Last name
-                </label>
-                <input
-                  id="ac-last"
-                  value={draftLast}
-                  onChange={(e) => setDraftLast(e.target.value)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <label htmlFor="ac-phone" className="flabel">
-                  Phone
-                </label>
-                <input
-                  id="ac-phone"
-                  value={draftPhone}
-                  onChange={(e) => setDraftPhone(e.target.value)}
-                  className="input"
-                />
-              </div>
-              <div>
-                <span className="flabel">Email</span>
-                <p className="input flex items-center text-muted" aria-readonly="true">
-                  {profile.email}
-                </p>
-                <p className="mt-1.5 text-xs text-muted-2">
-                  Your email is your sign-in and cannot be changed here.
-                </p>
-              </div>
-              {editError && (
-                <p className="text-sm text-primary" role="alert">
-                  {editError}
-                </p>
-              )}
-              <div className="flex gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setEditOpen(false)}
-                  className="btn btn--ghost flex-1"
-                >
-                  Cancel
-                </button>
-                <button type="submit" disabled={editSaving} className="btn btn--primary flex-1 disabled:opacity-60">
-                  {editSaving ? "Saving…" : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── Address Book modal ───────────────────────────────── */}
-      {addrOpen && profile && (
-        <div className="auth-root" role="dialog" aria-modal="true" aria-labelledby="addr-book-h">
-          <button
-            type="button"
-            aria-label="Close"
-            className="auth__backdrop"
-            onClick={() => setAddrOpen(false)}
-          />
-          <div className="auth__card auth__card--wide">
-            <div className="auth__head">
-              <h2 id="addr-book-h" className="auth__title">
-                Address Book
-              </h2>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setAddrOpen(false)}
-                className="text-muted transition hover:text-cream"
-              >
-                <IconClose className="h-5 w-5" />
-              </button>
-            </div>
-            <form onSubmit={saveAddresses} className="mt-5">
-              {draftAddresses.length === 0 && (
-                <p className="text-sm text-muted">
-                  No saved addresses yet — add one to check out faster.
-                </p>
-              )}
-              <div className="space-y-4">
-                {draftAddresses.map((address, i) => (
-                  <fieldset key={i} className="rounded-2xl border border-line bg-ink-2 p-5">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <label className="flabel" htmlFor={`addr-${i}-street`}>
-                          Street address
-                        </label>
-                        <input
-                          id={`addr-${i}-street`}
-                          value={address.street}
-                          onChange={(e) => updateDraftAddress(i, { street: e.target.value })}
-                          className="input"
-                        />
-                      </div>
-                      <div>
-                        <label className="flabel" htmlFor={`addr-${i}-city`}>
-                          City
-                        </label>
-                        <input
-                          id={`addr-${i}-city`}
-                          value={address.city}
-                          onChange={(e) => updateDraftAddress(i, { city: e.target.value })}
-                          className="input"
-                        />
-                      </div>
-                      <div>
-                        <label className="flabel" htmlFor={`addr-${i}-state`}>
-                          State / Province
-                        </label>
-                        <input
-                          id={`addr-${i}-state`}
-                          value={address.state}
-                          onChange={(e) => updateDraftAddress(i, { state: e.target.value })}
-                          className="input"
-                        />
-                      </div>
-                      <div>
-                        <label className="flabel" htmlFor={`addr-${i}-zip`}>
-                          ZIP / Postal code
-                        </label>
-                        <input
-                          id={`addr-${i}-zip`}
-                          value={address.zipCode}
-                          onChange={(e) => updateDraftAddress(i, { zipCode: e.target.value })}
-                          className="input"
-                        />
-                      </div>
-                      <div>
-                        <label className="flabel" htmlFor={`addr-${i}-country`}>
-                          Country
-                        </label>
-                        <input
-                          id={`addr-${i}-country`}
-                          value={address.country}
-                          onChange={(e) => updateDraftAddress(i, { country: e.target.value })}
-                          className="input"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <label className="flex items-center gap-2 text-sm text-muted">
-                        <input
-                          type="checkbox"
-                          checked={address.isDefault}
-                          onChange={(e) =>
-                            setDraftAddresses((prev) =>
-                              prev.map((a, j) => ({
-                                ...a,
-                                isDefault: e.target.checked ? j === i : a.isDefault && j !== i,
-                              })),
-                            )
-                          }
-                          className="chk"
-                        />
-                        Default address
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setDraftAddresses((prev) => prev.filter((_, j) => j !== i))}
-                        className="text-sm text-muted-2 transition hover:text-primary"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </fieldset>
-                ))}
-              </div>
-              {addrError && (
-                <p className="mt-4 text-sm text-primary" role="alert">
-                  {addrError}
-                </p>
-              )}
-              <div className="mt-5 flex flex-wrap gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setDraftAddresses((prev) => [...prev, { ...emptyAddress }])}
-                  className="btn btn--ghost"
-                >
-                  + Add Address
-                </button>
-                <span className="flex-1" />
-                <button
-                  type="button"
-                  onClick={() => setAddrOpen(false)}
-                  className="btn btn--ghost"
-                >
-                  Cancel
-                </button>
-                <button type="submit" disabled={addrSaving} className="btn btn--primary disabled:opacity-60">
-                  {addrSaving ? "Saving…" : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* ── Photo cropper (1:1 only) ─────────────────────────── */}
       <ImageCropper imageSrc={cropSrc} onClose={closeCrop} onConfirm={confirmCrop} />
