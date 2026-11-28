@@ -13,6 +13,7 @@ import {
 } from "@/lib/api";
 import { useShop, type ProductLike } from "@/lib/store";
 import AccountAvatar from "@/components/AccountAvatar";
+import ImageCropper from "@/components/ImageCropper";
 import { IconBag, IconBox, IconClose, IconHeart, IconTruck } from "@/components/icons";
 
 const emptyAddress: CustomerAddress = {
@@ -20,47 +21,6 @@ const emptyAddress: CustomerAddress = {
 };
 
 const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-/** Read a picked photo, centre-crop it square and shrink it to at
- *  most 512px as a JPEG data URL — the avatar the backend stores
- *  (its own cap is 2 MB; this lands far under it). */
-const downscalePhoto = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const side = Math.min(img.naturalWidth, img.naturalHeight);
-        const out = Math.min(512, side);
-        const canvas = document.createElement("canvas");
-        canvas.width = out;
-        canvas.height = out;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("That photo could not be processed.");
-        ctx.drawImage(
-          img,
-          (img.naturalWidth - side) / 2,
-          (img.naturalHeight - side) / 2,
-          side,
-          side,
-          0,
-          0,
-          out,
-          out,
-        );
-        resolve(canvas.toDataURL("image/jpeg", 0.9));
-      } catch (err) {
-        reject(err instanceof Error ? err : new Error("That photo could not be processed."));
-      } finally {
-        URL.revokeObjectURL(url);
-      }
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("That photo could not be read."));
-    };
-    img.src = url;
-  });
 
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -87,8 +47,10 @@ export default function AccountPage() {
   const [currency, setCurrency] = useState("USD");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  // Photo change
+  // Photo change: picking a file opens the 1:1 cropper; only its
+  // cropped square ever uploads.
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMessage, setPhotoMessage] = useState("");
   const [photoError, setPhotoError] = useState("");
@@ -196,7 +158,7 @@ export default function AccountPage() {
     ? profile.addresses.find((a) => a.isDefault) || profile.addresses[0]
     : undefined;
 
-  const onPhotoPicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPhotoPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -210,9 +172,25 @@ export default function AccountPage() {
       setPhotoError("Choose a photo of 5 MB or smaller.");
       return;
     }
+    // Into the cropper — nothing uploads until its square is confirmed.
+    setCropSrc(URL.createObjectURL(file));
+  };
+
+  const closeCrop = () => {
+    setCropSrc((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
+  /** The cropper's confirm: upload its 1:1 square (≤512px JPEG —
+   *  far under the backend's 2 MB cap). Rejects on failure so the
+   *  cropper can show the error and stay open for a retry. */
+  const confirmCrop = async (dataUrl: string) => {
     setPhotoBusy(true);
+    setPhotoError("");
+    setPhotoMessage("");
     try {
-      const dataUrl = await downscalePhoto(file);
       const updated = await apiCall<CustomerProfile>(
         "POST",
         "/api/storefront/me/avatar",
@@ -224,9 +202,9 @@ export default function AccountPage() {
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         expireSession();
-        return;
+        throw new Error("Your session has expired. Please sign in again.");
       }
-      setPhotoError(err instanceof Error ? err.message : "Could not update your photo.");
+      throw err instanceof Error ? err : new Error("Could not update your photo.");
     } finally {
       setPhotoBusy(false);
     }
@@ -396,9 +374,6 @@ export default function AccountPage() {
             >
               <AccountAvatar name={fullName} avatar={profile.avatar} />
               <h2 className="mt-5 font-display text-2xl font-semibold text-cream">{fullName}</h2>
-              <span className="mt-3 rounded-full border border-line bg-ink-2 px-3.5 py-1 font-display text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                Customer
-              </span>
               <p className="mt-3 text-sm text-muted">Member since {memberSince}</p>
               <input
                 ref={photoInputRef}
@@ -950,6 +925,9 @@ export default function AccountPage() {
           </div>
         </div>
       )}
+
+      {/* ── Photo cropper (1:1 only) ─────────────────────────── */}
+      <ImageCropper imageSrc={cropSrc} onClose={closeCrop} onConfirm={confirmCrop} />
     </div>
   );
 }
